@@ -9,6 +9,24 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
+        <NavigationView x:Name="NavigationView"
+                        PaneDisplayMode="Top"
+                        PaneTitle="Time Blocking App"
+                        BackRequested="NavigationView_BackRequested"
+                        ItemInvoked="NavigationView_ItemInvoked"
+                        Loaded="NavigationView_Loaded">
+            <NavigationView.MenuItems>
+                <NavigationViewItem Tag="Home"
+                                    Icon="Home"
+                                    Content="Home"
+                                    x:Name="HomeNavigationViewItem"></NavigationViewItem>
+            </NavigationView.MenuItems>
 
+            <ScrollViewer>
+                <Frame x:Name="ContentFrame"
+                       Navigated="ContentFrame_Navigated"
+                       NavigationFailed="ContentFrame_NavigationFailed"></Frame>
+            </ScrollViewer>
+        </NavigationView>
     </Grid>
 </Page>

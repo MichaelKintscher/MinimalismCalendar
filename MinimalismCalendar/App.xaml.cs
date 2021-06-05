@@ -68,6 +68,11 @@ namespace MinimalismCalendar
                     // parameter
                     rootFrame.Navigate(typeof(MainPage), e.Arguments);
                 }
+
+                // Start the App Controller.
+                MainPage rootPage = rootFrame.Content as MainPage;
+                Controllers.AppController.Instance.StartApp(rootPage);
+
                 // Ensure the current window is active
                 Window.Current.Activate();
             }
