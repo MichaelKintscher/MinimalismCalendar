@@ -22,11 +22,9 @@
                                     x:Name="HomeNavigationViewItem"></NavigationViewItem>
             </NavigationView.MenuItems>
 
-            <ScrollViewer>
-                <Frame x:Name="ContentFrame"
+            <Frame x:Name="ContentFrame"
                        Navigated="ContentFrame_Navigated"
                        NavigationFailed="ContentFrame_NavigationFailed"></Frame>
-            </ScrollViewer>
         </NavigationView>
     </Grid>
 </Page>

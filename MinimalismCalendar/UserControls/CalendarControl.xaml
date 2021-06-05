@@ -1,0 +1,146 @@
+﻿<UserControl
+    x:Class="MinimalismCalendar.UserControls.CalendarControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MinimalismCalendar.UserControls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="300"
+    d:DesignWidth="400">
+
+    <UserControl.Resources>
+        <Style x:Key="AgendaTimeTextBlockStyle"
+               TargetType="TextBlock">
+            <Setter Property="Height" Value="50"></Setter>
+            <Setter Property="Width" Value="20"></Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0">Header</TextBlock>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+
+            <!-- Day headers -->
+            <StackPanel Grid.Row="0"
+                            Grid.Column="1">
+                <TextBlock>Sunday</TextBlock>
+                <TextBlock></TextBlock>
+            </StackPanel>
+            <StackPanel Grid.Row="0"
+                            Grid.Column="2">
+                <TextBlock>Monday</TextBlock>
+                <TextBlock></TextBlock>
+            </StackPanel>
+            <StackPanel Grid.Row="0"
+                            Grid.Column="3">
+                <TextBlock>Tuesday</TextBlock>
+                <TextBlock></TextBlock>
+            </StackPanel>
+            <StackPanel Grid.Row="0"
+                            Grid.Column="4">
+                <TextBlock>Wednesday</TextBlock>
+                <TextBlock></TextBlock>
+            </StackPanel>
+            <StackPanel Grid.Row="0"
+                            Grid.Column="5">
+                <TextBlock>Thursday</TextBlock>
+                <TextBlock></TextBlock>
+            </StackPanel>
+            <StackPanel Grid.Row="0"
+                            Grid.Column="6">
+                <TextBlock>Friday</TextBlock>
+                <TextBlock></TextBlock>
+            </StackPanel>
+            <StackPanel Grid.Row="0"
+                            Grid.Column="7">
+                <TextBlock>Saturday</TextBlock>
+                <TextBlock></TextBlock>
+            </StackPanel>
+        </Grid>
+
+        <ScrollViewer Grid.Row="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="40"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+
+                <!-- Agenda Times -->
+                <StackPanel Grid.Row="1"
+                            Grid.Column="0">
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">12 am</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">1 am</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">2 am</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">3 am</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">4 am</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">5 am</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">6 am</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">7 am</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">8 am</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">9 am</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">10 am</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">11 am</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">12 pm</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">1 pm</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">2 pm</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">3 pm</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">4 pm</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">5 pm</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">6 pm</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">7 pm</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">8 pm</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">9 pm</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">10 pm</TextBlock>
+                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">11 pm</TextBlock>
+                </StackPanel>
+
+                <!-- Day agenda views -->
+                <local:DayAgendaControl x:Name="Day1AgendaControl"
+                                        Grid.Row="1"
+                                        Grid.Column="1"></local:DayAgendaControl>
+                <local:DayAgendaControl x:Name="Day2AgendaControl"
+                                        Grid.Row="1"
+                                        Grid.Column="2"></local:DayAgendaControl>
+                <local:DayAgendaControl x:Name="Day3AgendaControl"
+                                        Grid.Row="1"
+                                        Grid.Column="3"></local:DayAgendaControl>
+                <local:DayAgendaControl x:Name="Day4AgendaControl"
+                                        Grid.Row="1"
+                                        Grid.Column="4"></local:DayAgendaControl>
+                <local:DayAgendaControl x:Name="Day5AgendaControl"
+                                        Grid.Row="1"
+                                        Grid.Column="5"></local:DayAgendaControl>
+                <local:DayAgendaControl x:Name="Day6AgendaControl"
+                                        Grid.Row="1"
+                                        Grid.Column="6"></local:DayAgendaControl>
+                <local:DayAgendaControl x:Name="Day0AgendaControl"
+                                        Grid.Row="1"
+                                        Grid.Column="7"></local:DayAgendaControl>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
