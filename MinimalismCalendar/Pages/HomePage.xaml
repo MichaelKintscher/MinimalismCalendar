@@ -9,6 +9,47 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
-
+        <SplitView IsPaneOpen="True"
+                   DisplayMode="Inline">
+            <SplitView.Pane>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    
+                    <CalendarView Grid.Row="0"
+                                  HorizontalAlignment="Stretch"></CalendarView>
+                    
+                    <Button x:Name="NewEventButton"
+                            Grid.Row="1"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal">
+                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE109;"></FontIcon>
+                            <TextBlock Text="New Event"
+                                   Margin="10,0,0,0"
+                                   FontSize="24"></TextBlock>
+                        </StackPanel>
+                    </Button>
+                    
+                    <ListView Header="Calendars"
+                              Grid.Row="2"
+                              HorizontalAlignment="Stretch"></ListView>
+                    
+                    <Button x:Name="EditCalendarsButton"
+                            Grid.Row="3"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal">
+                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE787;"></FontIcon>
+                            <TextBlock Text="Edit Calendars"
+                                   Margin="10,0,0,0"
+                                   FontSize="24"></TextBlock>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </SplitView.Pane>
+        </SplitView>
     </Grid>
 </Page>
