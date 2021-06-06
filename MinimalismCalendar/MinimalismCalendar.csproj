@@ -144,6 +144,7 @@
     <Compile Include="UserControls\DayAgendaControl.xaml.cs">
       <DependentUpon>DayAgendaControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Utility\DateUtility.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

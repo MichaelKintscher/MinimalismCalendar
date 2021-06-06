@@ -12,7 +12,6 @@
     <UserControl.Resources>
         <Style x:Key="AgendaTimeTextBlockStyle"
                TargetType="TextBlock">
-            <Setter Property="Height" Value="50"></Setter>
             <Setter Property="Width" Value="20"></Setter>
         </Style>
     </UserControl.Resources>
@@ -92,30 +91,31 @@
                 <!-- Agenda Times -->
                 <StackPanel Grid.Row="1"
                             Grid.Column="0">
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">12 am</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">1 am</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">2 am</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">3 am</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">4 am</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">5 am</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">6 am</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">7 am</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">8 am</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">9 am</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">10 am</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">11 am</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">12 pm</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">1 pm</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">2 pm</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">3 pm</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">4 pm</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">5 pm</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">6 pm</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">7 pm</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">8 pm</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">9 pm</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">10 pm</TextBlock>
-                    <TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">11 pm</TextBlock>
+                    <!-- The height of each time block is bound to the AgendaTimeUnitHeight property. -->
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">12 am</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">1 am</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">2 am</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">3 am</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">4 am</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">5 am</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">6 am</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">7 am</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">8 am</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">9 am</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">10 am</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">11 am</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">12 pm</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">1 pm</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">2 pm</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">3 pm</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">4 pm</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">5 pm</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">6 pm</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">7 pm</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">8 pm</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">9 pm</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">10 pm</TextBlock>
+                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">11 pm</TextBlock>
                 </StackPanel>
 
                 <!-- Day agenda views -->
