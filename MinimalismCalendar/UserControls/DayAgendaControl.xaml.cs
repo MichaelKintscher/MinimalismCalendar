@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -60,7 +61,10 @@ namespace MinimalismCalendar.UserControls
             }
         }
 
-        private List<CalendarEvent> events { get; set; }
+        /// <summary>
+        /// The list of events the control can display from.
+        /// </summary>
+        public ObservableCollection<CalendarEvent> CalendarEvents { get; private set; }
         #endregion
 
         #region Events
@@ -84,23 +88,33 @@ namespace MinimalismCalendar.UserControls
 
             // Initialize the collections.
             this.eventBlocks = new List<Border>();
-            this.events = new List<CalendarEvent>();
+            this.CalendarEvents = new ObservableCollection<CalendarEvent>();
+
+            // Subscribe to the changed event for the Calendar Events collection.
+            this.CalendarEvents.CollectionChanged += this.CalendarEventsChanged;
         }
 
         #region Event Handlers
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Handles the Collection Changed event for the calendar events collection.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CalendarEventsChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            // FOR TESTING PURPOSES ONLY!!!
-            this.AddEvents(TestDataGenerator.GetTestEvents());
+            // Refresh all of the day adenga views.
+            //      NOTE: This can be optimized to only refresh the necessary views - those
+            //      displaying the affected calendar events.
+            this.AddEvents(this.CalendarEvents.ToList());
         }
         #endregion
 
-        #region Methods
+        #region Helper Methods
         /// <summary>
-        /// Adds the given list of events to the agenda view.
+        /// Adds the given list of events to the agenda view. ONLY CALL THIS AFTER THE LOADED EVENT HAS FIRED.
         /// </summary>
         /// <param name="events">The list of calendar events to add to the agenda view.</param>
-        public void AddEvents(List<CalendarEvent> events)
+        private void AddEvents(List<CalendarEvent> events)
         {
             foreach (CalendarEvent calEvent in events)
             {
@@ -112,7 +126,7 @@ namespace MinimalismCalendar.UserControls
         /// Adds the given event to the agenda view.
         /// </summary>
         /// <param name="calEvent">The calendar event to add to the agenda view.</param>
-        public void AddEvent(CalendarEvent calEvent)
+        private void AddEvent(CalendarEvent calEvent)
         {
             // Create the UI for the event.
             TextBlock eventTextBlock = new TextBlock()
@@ -136,6 +150,9 @@ namespace MinimalismCalendar.UserControls
             this.AgendaCanvas.Children.Add(border);
 
             this.eventBlocks.Add(border);
+
+            // Use this line to observe unecessary repetitions of this event call.
+            System.Diagnostics.Debug.WriteLine("AddEvent executed from " + this.Name +" control for event name: " + calEvent.Name);
         }
         #endregion
     }

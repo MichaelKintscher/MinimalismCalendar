@@ -1,6 +1,9 @@
-﻿using MinimalismCalendar.Utility;
+﻿using MinimalismCalendar.Models;
+using MinimalismCalendar.Utility;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -25,7 +28,14 @@ namespace MinimalismCalendar.UserControls
     public sealed partial class CalendarControl : UserControl, INotifyPropertyChanged
     {
         #region Constants
+        /// <summary>
+        /// List of the Day of Month textblocks for easy iteration access.
+        /// </summary>
         private List<TextBlock> DayOfMonthTextBlocks;
+        /// <summary>
+        /// List of the Day Agenda controls for easy iteration access.
+        /// </summary>
+        private List<DayAgendaControl> DayAgendaControls;
         #endregion
 
         #region Properties
@@ -42,6 +52,14 @@ namespace MinimalismCalendar.UserControls
                 this.RaisePropertyChanged("AgendaTimeUnitHeight");
             }
         }
+
+        /// <summary>
+        /// The list of calendar events the control CAN display. (The control is not
+        /// necessarily actively displaying all at once - the control manages the
+        /// current view and displays events from this list contained within the scope
+        /// of that view, such as a week view).
+        /// </summary>
+        public ObservableCollection<CalendarEvent> CalendarEvents { get; private set; }
         #endregion
 
         #region Events
@@ -63,8 +81,12 @@ namespace MinimalismCalendar.UserControls
         {
             this.InitializeComponent();
 
-            // Initialize the height of the agenda time units.
+            // Initialize the properties.
             this.AgendaTimeUnitHeight = 50;
+            this.CalendarEvents = new ObservableCollection<CalendarEvent>();
+
+            // Subscribe to the changed event for the Calendar Events collection.
+            this.CalendarEvents.CollectionChanged += this.CalendarEventsChanged;
 
             // Initialize the day of month textblocks.
             this.DayOfMonthTextBlocks = new List<TextBlock>()
@@ -78,8 +100,48 @@ namespace MinimalismCalendar.UserControls
                 this.DayOfMonth6TextBlock
             };
 
+            // Initialize the day agena controls list.
+            this.DayAgendaControls = new List<DayAgendaControl>()
+            {
+                this.Day0AgendaControl,
+                this.Day1AgendaControl,
+                this.Day2AgendaControl,
+                this.Day3AgendaControl,
+                this.Day4AgendaControl,
+                this.Day5AgendaControl,
+                this.Day6AgendaControl
+            };
+
             this.SetToThisWeek();
         }
+
+        #region Event Handlers
+        /// <summary>
+        /// Handles the loaded event for the Day Agenda controls to complete setting up the data.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DayAgendaControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is DayAgendaControl control)
+            {
+                this.RefreshDayAgendaControl(control);
+            }
+        }
+
+        /// <summary>
+        /// Handles the Collection Changed event for the calendar events collection.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CalendarEventsChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            // Refresh all of the day adenga views.
+            //      NOTE: This can be optimized to only refresh the necessary views - those
+            //      displaying the affected calendar events.
+            this.RefreshDayAgendaControls(this.DayAgendaControls);
+        }
+        #endregion
 
         #region Methods
         /// <summary>
@@ -104,6 +166,39 @@ namespace MinimalismCalendar.UserControls
             {
                 // Set the day of the month blocks.
                 this.DayOfMonthTextBlocks[dayOfWeek].Text = sunday.AddDays(dayOfWeek).Day.ToString();
+            }
+        }
+        #endregion
+
+        #region Helper Methods
+        /// <summary>
+        /// Refreshes the given Day Agenda controls.
+        /// </summary>
+        /// <param name="controls">A list of Day Agenda controls to refresh.</param>
+        private void RefreshDayAgendaControls(List<DayAgendaControl> controls)
+        {
+            foreach (DayAgendaControl control in controls)
+            {
+                this.RefreshDayAgendaControl(control);
+            }
+        }
+
+        /// <summary>
+        /// Refreshes the given Day Agenda control.
+        /// </summary>
+        /// <param name="control">The day agenda control to refresh.</param>
+        private void RefreshDayAgendaControl(DayAgendaControl control)
+        {
+            // Clear the existing events.
+            control.CalendarEvents.Clear();
+
+            // Add the updated list of events to the control.
+            //      NOTE: this can be optimized in two ways:
+            //          1) only refresh the changed events
+            //          2) only provide a list of events for the day the control is displaying
+            foreach (CalendarEvent calEvent in this.CalendarEvents.ToList())
+            {
+                control.CalendarEvents.Add(calEvent);
             }
         }
         #endregion

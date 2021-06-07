@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MinimalismCalendar.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -26,5 +27,19 @@ namespace MinimalismCalendar.Pages
         {
             this.InitializeComponent();
         }
+
+        #region Methods
+        public void InitializeCalendarControl(DateTime visibleDate, List<CalendarEvent> events)
+        {
+            // Add the events to the calendar control's list.
+            foreach (CalendarEvent calEvent in events)
+            {
+                this.CalendarControl.CalendarEvents.Add(calEvent);
+            }
+
+            // Set the calendar control to show the given date.
+            this.CalendarControl.SetToWeek(visibleDate);
+        }
+        #endregion
     }
 }

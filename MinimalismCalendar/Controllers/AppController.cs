@@ -1,6 +1,7 @@
 ﻿using MinimalismCalendar.Controllers.Navigation;
 using MinimalismCalendar.Enums;
 using MinimalismCalendar.EventArguments;
+using MinimalismCalendar.Models;
 using MinimalismCalendar.Pages;
 using System;
 using System.Collections.Generic;
@@ -86,10 +87,10 @@ namespace MinimalismCalendar.Controllers
             // Store a reference to the page as the new current page.
             this.CurrentPage = e.PageNavigatedTo;
 
-            // Subscribe to the new page's events.
+            // Initialize the new page.
             if (e.PageNavigatedTo is HomePage homePage)
             {
-
+                this.InitializeHomePage(homePage);
             }
             else if (e.PageNavigatedTo is SettingsPage settingsPage)
             {
@@ -130,6 +131,30 @@ namespace MinimalismCalendar.Controllers
 
             // Navigate to the home page.
             this.NavState.GotoHome();
+        }
+        #endregion
+
+        #region Helper Methods
+        /*
+         * This design pattern is necessary because the NavigationView.Navigate method
+         * takes in a Type, and not a page instance. It creates the page instance and
+         * places that instance into the event args for a "Navigated" event. Handling
+         * this event is the way to get access to the instance of the new page, and
+         * thus initialize its data.
+         */
+
+        /// <summary>
+        /// Initializes the given instance of the home page.
+        /// </summary>
+        /// <param name="homePage">The instance of the home page to initialize.</param>
+        private void InitializeHomePage(HomePage homePage)
+        {
+            // Subscribe to the new page's events.
+            //    - None at the moment.
+
+            // Initialize the calendar control.
+            List<CalendarEvent> eventList = TestDataGenerator.GetTestEvents();
+            homePage.InitializeCalendarControl(DateTime.Now, eventList);
         }
         #endregion
     }
