@@ -41,37 +41,37 @@
             <StackPanel Grid.Row="0"
                             Grid.Column="1">
                 <TextBlock>Sunday</TextBlock>
-                <TextBlock></TextBlock>
+                <TextBlock x:Name="DayOfMonth0TextBlock"></TextBlock>
             </StackPanel>
             <StackPanel Grid.Row="0"
                             Grid.Column="2">
                 <TextBlock>Monday</TextBlock>
-                <TextBlock></TextBlock>
+                <TextBlock x:Name="DayOfMonth1TextBlock"></TextBlock>
             </StackPanel>
             <StackPanel Grid.Row="0"
                             Grid.Column="3">
                 <TextBlock>Tuesday</TextBlock>
-                <TextBlock></TextBlock>
+                <TextBlock x:Name="DayOfMonth2TextBlock"></TextBlock>
             </StackPanel>
             <StackPanel Grid.Row="0"
                             Grid.Column="4">
                 <TextBlock>Wednesday</TextBlock>
-                <TextBlock></TextBlock>
+                <TextBlock x:Name="DayOfMonth3TextBlock"></TextBlock>
             </StackPanel>
             <StackPanel Grid.Row="0"
                             Grid.Column="5">
                 <TextBlock>Thursday</TextBlock>
-                <TextBlock></TextBlock>
+                <TextBlock x:Name="DayOfMonth4TextBlock"></TextBlock>
             </StackPanel>
             <StackPanel Grid.Row="0"
                             Grid.Column="6">
                 <TextBlock>Friday</TextBlock>
-                <TextBlock></TextBlock>
+                <TextBlock x:Name="DayOfMonth5TextBlock"></TextBlock>
             </StackPanel>
             <StackPanel Grid.Row="0"
                             Grid.Column="7">
                 <TextBlock>Saturday</TextBlock>
-                <TextBlock></TextBlock>
+                <TextBlock x:Name="DayOfMonth6TextBlock"></TextBlock>
             </StackPanel>
         </Grid>
 

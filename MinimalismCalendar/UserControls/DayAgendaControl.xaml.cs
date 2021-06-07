@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -17,8 +18,42 @@ using Windows.UI.Xaml.Navigation;
 
 namespace MinimalismCalendar.UserControls
 {
-    public sealed partial class DayAgendaControl : UserControl
+    /// <summary>
+    /// A control for displaying an agenda view of a single day.
+    /// </summary>
+    public sealed partial class DayAgendaControl : UserControl, INotifyPropertyChanged
     {
+        #region Properties
+        private int dayOfMonth;
+        /// <summary>
+        /// The day of the month the agenda control is set to.
+        /// </summary>
+        public int DayOfMonth
+        {
+            get => this.dayOfMonth;
+            set
+            {
+                this.dayOfMonth = value;
+                this.RaisePropertyChanged("DayOfMonth");
+            }
+        }
+        #endregion
+
+        #region Events
+        public event PropertyChangedEventHandler PropertyChanged;
+        /// <summary>
+        /// Raise the PropertChanged event for the given property name.
+        /// </summary>
+        /// <param name="name">Name of the property changed.</param>
+        public void RaisePropertyChanged(string name)
+        {
+            if (this.PropertyChanged != null)
+            {
+                this.PropertyChanged(this, new PropertyChangedEventArgs(name));
+            }
+        }
+        #endregion
+
         public DayAgendaControl()
         {
             this.InitializeComponent();

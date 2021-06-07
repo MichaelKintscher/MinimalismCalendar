@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MinimalismCalendar.Utility;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -18,8 +19,15 @@ using Windows.UI.Xaml.Navigation;
 
 namespace MinimalismCalendar.UserControls
 {
+    /// <summary>
+    /// Control for displaying detailed calendar data.
+    /// </summary>
     public sealed partial class CalendarControl : UserControl, INotifyPropertyChanged
     {
+        #region Constants
+        private List<TextBlock> DayOfMonthTextBlocks;
+        #endregion
+
         #region Properties
         private double agendaTimeUnitHeight;
         /// <summary>
@@ -57,6 +65,47 @@ namespace MinimalismCalendar.UserControls
 
             // Initialize the height of the agenda time units.
             this.AgendaTimeUnitHeight = 50;
+
+            // Initialize the day of month textblocks.
+            this.DayOfMonthTextBlocks = new List<TextBlock>()
+            {
+                this.DayOfMonth0TextBlock,
+                this.DayOfMonth1TextBlock,
+                this.DayOfMonth2TextBlock,
+                this.DayOfMonth3TextBlock,
+                this.DayOfMonth4TextBlock,
+                this.DayOfMonth5TextBlock,
+                this.DayOfMonth6TextBlock
+            };
+
+            this.SetToThisWeek();
         }
+
+        #region Methods
+        /// <summary>
+        /// Sets the calendar control to display the current week.
+        /// </summary>
+        public void SetToThisWeek()
+        {
+            // Set the control to the current week.
+            this.SetToWeek(DateTime.Now);
+        }
+
+        /// <summary>
+        /// Sets the calendar control to display the week containing the given date.
+        /// </summary>
+        /// <param name="date">The date contained in the week to set the control to.</param>
+        public void SetToWeek(DateTime date)
+        {
+            DateTime sunday = DateUtility.GetPreviousSunday(date);
+
+            // For each day in the week...
+            for (int dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
+            {
+                // Set the day of the month blocks.
+                this.DayOfMonthTextBlocks[dayOfWeek].Text = sunday.AddDays(dayOfWeek).Day.ToString();
+            }
+        }
+        #endregion
     }
 }
