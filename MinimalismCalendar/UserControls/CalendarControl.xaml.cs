@@ -39,7 +39,7 @@ namespace MinimalismCalendar.UserControls
             set
             {
                 this.agendaTimeUnitHeight = value;
-                this.RaisePropertyChanged("TimeUnitHeight");
+                this.RaisePropertyChanged("AgendaTimeUnitHeight");
             }
         }
         #endregion

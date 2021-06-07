@@ -121,25 +121,32 @@
                 <!-- Day agenda views -->
                 <local:DayAgendaControl x:Name="Day1AgendaControl"
                                         Grid.Row="1"
-                                        Grid.Column="1"></local:DayAgendaControl>
+                                        Grid.Column="1"
+                                        AgendaTimeUnitHeight="{x:Bind AgendaTimeUnitHeight}"></local:DayAgendaControl>
                 <local:DayAgendaControl x:Name="Day2AgendaControl"
                                         Grid.Row="1"
-                                        Grid.Column="2"></local:DayAgendaControl>
+                                        Grid.Column="2"
+                                        AgendaTimeUnitHeight="{x:Bind AgendaTimeUnitHeight}"></local:DayAgendaControl>
                 <local:DayAgendaControl x:Name="Day3AgendaControl"
                                         Grid.Row="1"
-                                        Grid.Column="3"></local:DayAgendaControl>
+                                        Grid.Column="3"
+                                        AgendaTimeUnitHeight="{x:Bind AgendaTimeUnitHeight}"></local:DayAgendaControl>
                 <local:DayAgendaControl x:Name="Day4AgendaControl"
                                         Grid.Row="1"
-                                        Grid.Column="4"></local:DayAgendaControl>
+                                        Grid.Column="4"
+                                        AgendaTimeUnitHeight="{x:Bind AgendaTimeUnitHeight}"></local:DayAgendaControl>
                 <local:DayAgendaControl x:Name="Day5AgendaControl"
                                         Grid.Row="1"
-                                        Grid.Column="5"></local:DayAgendaControl>
+                                        Grid.Column="5"
+                                        AgendaTimeUnitHeight="{x:Bind AgendaTimeUnitHeight}"></local:DayAgendaControl>
                 <local:DayAgendaControl x:Name="Day6AgendaControl"
                                         Grid.Row="1"
-                                        Grid.Column="6"></local:DayAgendaControl>
+                                        Grid.Column="6"
+                                        AgendaTimeUnitHeight="{x:Bind AgendaTimeUnitHeight}"></local:DayAgendaControl>
                 <local:DayAgendaControl x:Name="Day0AgendaControl"
                                         Grid.Row="1"
-                                        Grid.Column="7"></local:DayAgendaControl>
+                                        Grid.Column="7"
+                                        AgendaTimeUnitHeight="{x:Bind AgendaTimeUnitHeight}"></local:DayAgendaControl>
             </Grid>
         </ScrollViewer>
     </Grid>
