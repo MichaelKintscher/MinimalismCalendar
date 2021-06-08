@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/MinimalismCalendar/Assets/Config/ApiConfig.json
+/MinimalismCalendar/Assets/Config/credentials.json
