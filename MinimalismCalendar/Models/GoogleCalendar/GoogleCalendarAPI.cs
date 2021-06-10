@@ -24,11 +24,11 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// <summary>
         /// The file path the API credentials are stored in.
         /// </summary>
-        private static readonly string credentialsFilePath = "ms-appx:///Assets/Config/credentials.json";
+        private static readonly string credentialsFilePath = "Assets/Config/credentials.json";
         /// <summary>
         /// The file path the authenticated token for API access is stored in.
         /// </summary>
-        private static readonly string authTokenFilePath = ApplicationData.Current.LocalFolder.Path + "/token.json";
+        private static readonly string authTokenFilePath = ApplicationData.Current.LocalFolder.Path + "\\token.json";
         /// <summary>
         /// The scopes within the API the app is accessing.
         /// </summary>
@@ -66,12 +66,22 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             using (FileStream stream = new FileStream(
                 GoogleCalendarAPI.credentialsFilePath, FileMode.Open, FileAccess.Read))
             {
-                GoogleCalendarAPI.credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    GoogleClientSecrets.Load(stream).Secrets,
-                    GoogleCalendarAPI.scopes,
-                    "user",
-                    CancellationToken.None,
-                    new FileDataStore(GoogleCalendarAPI.authTokenFilePath, true));
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine("the path is: " + GoogleCalendarAPI.authTokenFilePath);
+                    GoogleCalendarAPI.credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                        GoogleClientSecrets.Load(stream).Secrets,
+                        GoogleCalendarAPI.scopes,
+                        "user",
+                        CancellationToken.None,
+                        new FileDataStore(GoogleCalendarAPI.authTokenFilePath, true));
+                    System.Diagnostics.Debug.WriteLine("B");
+                }
+                catch (Exception e)
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: " + e.Message);
+                }
+                
             }
         }
 

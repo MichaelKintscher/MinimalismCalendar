@@ -2,6 +2,7 @@
 using MinimalismCalendar.Enums;
 using MinimalismCalendar.EventArguments;
 using MinimalismCalendar.Models;
+using MinimalismCalendar.Models.GoogleCalendar;
 using MinimalismCalendar.Pages;
 using System;
 using System.Collections.Generic;
@@ -94,7 +95,7 @@ namespace MinimalismCalendar.Controllers
             }
             else if (e.PageNavigatedTo is SettingsPage settingsPage)
             {
-                
+                this.InitializeSettingsPage(settingsPage);
             }
 
             // Unsubscribe from the old page's events. This is to clear any handles on the page
@@ -110,8 +111,18 @@ namespace MinimalismCalendar.Controllers
             }
             else if (e.PageNavigatedFrom is SettingsPage settingsPageFrom)
             {
-                
+                settingsPageFrom.ConnectServiceRequested -= this.SettingsPage_ConnectServiceRequested;
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SettingsPage_ConnectServiceRequested(object sender, ConnectServiceRequestedEventArgs e)
+        {
+            this.ConnectGoogleCalendarAsync();
         }
         #endregion
 
@@ -155,6 +166,24 @@ namespace MinimalismCalendar.Controllers
             // Initialize the calendar control.
             List<CalendarEvent> eventList = TestDataGenerator.GetTestEvents();
             homePage.InitializeCalendarControl(DateTime.Now, eventList);
+        }
+
+        /// <summary>
+        /// Initializes the given instance of the settings page.
+        /// </summary>
+        /// <param name="settingsPage"></param>
+        private void InitializeSettingsPage(SettingsPage settingsPage)
+        {
+            // Subscribe to the new page's events.
+            settingsPage.ConnectServiceRequested += this.SettingsPage_ConnectServiceRequested;
+
+            // Update the Google API status.
+            settingsPage.GoogleAuthStatus = GoogleCalendarAPI.IsAuthorized ? "Good to go!" : "Please reconnect.";
+        }
+
+        private async Task ConnectGoogleCalendarAsync()
+        {
+            await GoogleCalendarAPI.AuthorizeAsync();
         }
         #endregion
     }

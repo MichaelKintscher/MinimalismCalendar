@@ -126,6 +126,7 @@
     <Compile Include="Controllers\Navigation\StartState.cs" />
     <Compile Include="Controllers\SingletonController.cs" />
     <Compile Include="Enums\PageTypes.cs" />
+    <Compile Include="EventArguments\ConnectServiceRequestedEventArgs.cs" />
     <Compile Include="EventArguments\NavigatedEventArgs.cs" />
     <Compile Include="EventArguments\NavigationRequestedEventArgs.cs" />
     <Compile Include="MainPage.xaml.cs">

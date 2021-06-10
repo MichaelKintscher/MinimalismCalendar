@@ -9,6 +9,14 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
-
+        <StackPanel>
+            <TextBlock Style="{StaticResource HeaderTextBlockStyle}"
+                       Text="Google Account"></TextBlock>
+            <Button x:Name="AuthenticateGoogleButton"
+                    Click="AuthenticateGoogleButton_Click"> Authenticate</Button>
+            <TextBlock x:Name="AuthStatusTextBlock"
+                       Text="{x:Bind GoogleAuthStatus}"></TextBlock>
+            <TextBlock x:Name="CalendarEventTestTextBlock"></TextBlock>
+        </StackPanel>
     </Grid>
 </Page>
