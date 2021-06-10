@@ -101,5 +101,49 @@ namespace MinimalismCalendar
             //TODO: Save application state and stop any background activity
             deferral.Complete();
         }
+
+        /// <summary>
+        /// Handles URI activation for the app.
+        /// </summary>
+        /// <param name="args"></param>
+        protected override void OnActivated(IActivatedEventArgs args)
+        {
+            if (args.Kind == ActivationKind.Protocol)
+            {
+                ProtocolActivatedEventArgs eventArgs = args as ProtocolActivatedEventArgs;
+                // TODO: Handle URI activation
+                // The received URI is eventArgs.Uri.AbsoluteUri
+
+                Frame rootFrame = Window.Current.Content as Frame;
+
+                // Create a Frame to act as the navigation context and navigate to the first page
+                rootFrame = new Frame();
+
+                rootFrame.NavigationFailed += OnNavigationFailed;
+
+                if (args.PreviousExecutionState == ApplicationExecutionState.Terminated)
+                {
+                    //TODO: Load state from previously suspended application
+                }
+
+                // Place the frame in the current Window
+                Window.Current.Content = rootFrame;
+
+                if (rootFrame.Content == null)
+                {
+                    // When the navigation stack isn't restored navigate to the first page,
+                    // configuring the new page by passing required information as a navigation
+                    // parameter
+                    rootFrame.Navigate(typeof(MainPage));
+                }
+
+                // Start the App Controller.
+                MainPage rootPage = rootFrame.Content as MainPage;
+                Controllers.AppController.Instance.ResumeAppFromAPIAuth(rootPage);
+
+                // Ensure the current window is active
+                Window.Current.Activate();
+            }
+        }
     }
 }

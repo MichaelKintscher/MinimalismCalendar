@@ -201,6 +201,9 @@
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.12</Version>
     </PackageReference>
+    <PackageReference Include="Xamarin.Essentials">
+      <Version>1.6.1</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Config\credentials.json">

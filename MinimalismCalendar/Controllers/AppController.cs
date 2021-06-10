@@ -143,6 +143,23 @@ namespace MinimalismCalendar.Controllers
             // Navigate to the home page.
             this.NavState.GotoHome();
         }
+
+        public void ResumeAppFromAPIAuth(MainPage rootPage)
+        {
+            // Subscribe to the root page's events.
+            rootPage.NavigationRequested += this.OnNavigationRequested;
+            rootPage.Navigated += this.OnNavigated;
+
+            // Set the given page as the root page.
+            this.RootPage = rootPage;
+
+            System.Diagnostics.Debug.WriteLine("annnnnd we back!");
+
+            // Finish the Authorization.
+            //ClickUpAPIWrapper.Instance.GetOauthTokenAsync();
+            // Navigate to the home page.
+            //this.NavState.GotoHome();
+        }
         #endregion
 
         #region Helper Methods
@@ -183,7 +200,7 @@ namespace MinimalismCalendar.Controllers
 
         private async Task ConnectGoogleCalendarAsync()
         {
-            await GoogleCalendarAPI.AuthorizeAsync();
+            await GoogleCalendarAPI.Instance.AuthorizeAsync();
         }
         #endregion
     }

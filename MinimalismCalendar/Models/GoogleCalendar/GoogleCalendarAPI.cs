@@ -3,6 +3,7 @@ using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
+using MinimalismCalendar.Controllers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +12,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
+using Xamarin.Essentials;
 
 namespace MinimalismCalendar.Models.GoogleCalendar
 {
@@ -18,7 +20,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
     /// Wrapper class for interfacing with the Google Calendar API. This class
     /// encapsulates all external dependencies on the Google Calendar v3 API.
     /// </summary>
-    public static class GoogleCalendarAPI
+    public class GoogleCalendarAPI : SingletonController<GoogleCalendarAPI>
     {
         #region Constants
         /// <summary>
@@ -53,48 +55,44 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             // The credential property contains a value if the app has previously been authorized.
             get => GoogleCalendarAPI.credential != null;
         }
+
+        public static readonly string baseUri = "https://accounts.google.com/o/oauth2/v2/auth";
+
+        public static readonly string redirectUri = "urn:ietf:wg:oauth:2.0:oob";
         #endregion
 
         #region Methods
+        public async Task AuthorizeAsync()
+        {
+            await this.StartOAuthAsync();
+        }
+
         /// <summary>
         /// Prompts the user to authorize the app with Google's services.
         /// </summary>
-        public static async Task AuthorizeAsync()
+        public async Task<Uri> StartOAuthAsync()
         {
-            // This function is adapted from Google's tutorial: https://developers.google.com/calendar/quickstart/dotnet
+            Uri startUri = this.GetOauthEndpoint();
 
-            using (FileStream stream = new FileStream(
-                GoogleCalendarAPI.credentialsFilePath, FileMode.Open, FileAccess.Read))
-            {
-                try
-                {
-                    System.Diagnostics.Debug.WriteLine("the path is: " + GoogleCalendarAPI.authTokenFilePath);
-                    GoogleCalendarAPI.credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                        GoogleClientSecrets.Load(stream).Secrets,
-                        GoogleCalendarAPI.scopes,
-                        "user",
-                        CancellationToken.None,
-                        new FileDataStore(GoogleCalendarAPI.authTokenFilePath, true));
-                    System.Diagnostics.Debug.WriteLine("B");
-                }
-                catch (Exception e)
-                {
-                    System.Diagnostics.Debug.WriteLine("ERROR: " + e.Message);
-                }
-                
-            }
+            await Browser.OpenAsync(startUri);
+            return startUri;
+        }
+
+        public async Task GetOauthTokenAsync(string authorizationCode)
+        {
+
         }
 
         /// <summary>
         /// Gets a list of 10 events from the authorized user's primary calendar.
         /// </summary>
         /// <returns>A list of calendar events.</returns>
-        public static async Task<List<CalendarEvent>> GetCalendarEventsAsync()
+        public async Task<List<CalendarEvent>> GetCalendarEventsAsync()
         {
             // Authorize if not already done so.
             if (!GoogleCalendarAPI.IsAuthorized)
             {
-                await GoogleCalendarAPI.AuthorizeAsync();
+                await this.AuthorizeAsync();
             }
 
             // Create the Google Calendar API service.
@@ -121,6 +119,32 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         #endregion
 
         #region Helper Methods
+        private Uri GetOauthEndpoint()
+        {
+            // Build the scopes string as a space deliminated list, per the requirement
+            //      specified here: https://developers.google.com/identity/protocols/oauth2/native-app#uwp
+            StringBuilder scopesString = new StringBuilder();
+            foreach( string scope in GoogleCalendarAPI.scopes)
+            {
+                scopesString.Append(scope);
+                scopesString.Append(" ");
+            }
+
+            // Open the secrets file to read the client ID.
+            using (var stream = new FileStream(GoogleCalendarAPI.credentialsFilePath, FileMode.Open, FileAccess.Read))
+            {
+                ClientSecrets secrets = GoogleClientSecrets.Load(stream).Secrets;
+
+                // Create the start URI
+                string startUrl = GoogleCalendarAPI.baseUri +
+                                    "?client_id=" + secrets.ClientId +
+                                    "&redirect_uri=" + GoogleCalendarAPI.redirectUri +
+                                    "&response_type=code" +
+                                    "&scope=" + scopesString.ToString();
+                return new Uri(startUrl);
+            }
+        }
+
         /// <summary>
         /// Converts a list of events in the Google Calendar API v3 format to a list of
         /// events in the local app's format.
