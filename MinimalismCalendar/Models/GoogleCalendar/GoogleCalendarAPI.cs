@@ -78,9 +78,16 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             return startUri;
         }
 
-        public async Task GetOauthTokenAsync(string authorizationCode)
+        /// <summary>
+        /// Completes the OAuth flow by exchanging the given authorization code for a token.
+        /// </summary>
+        /// <param name="authorizationCode">The authorization code to exchange for the token.</param>
+        /// <returns>The authorization token to use in future API calls.</returns>
+        public async Task<string> GetOauthTokenAsync(string authorizationCode)
         {
+            System.Diagnostics.Debug.WriteLine("Getting token using code: " + authorizationCode);
 
+            return "";
         }
 
         /// <summary>

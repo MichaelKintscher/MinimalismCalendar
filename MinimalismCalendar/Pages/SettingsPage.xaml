@@ -9,6 +9,26 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
+        <!-- The content dialog for authentication errors. -->
+        <ContentDialog x:Name="OauthErrorDialog"
+                       PrimaryButtonText="Try Again"
+                       CloseButtonText="Cancel"
+                       Title="Authentication Error">
+            <TextBlock x:Name="OAuthErrorTextBlock"></TextBlock>
+        </ContentDialog>
+        
+        <!-- The content dialog for entering an OAuth code. -->
+        <ContentDialog x:Name="FinishAddingServiceDialog"
+                       PrimaryButtonText="Finish"
+                       CloseButtonText="Nevermind"
+                       Title="Authentication Code">
+            <StackPanel>
+                <TextBlock Text="Paste the code from your web browser here."
+                           Margin="0,0,0,5"></TextBlock>
+                <TextBox x:Name="ServiceOauthCodeTextBox"></TextBox>
+            </StackPanel>
+        </ContentDialog>
+        
         <StackPanel>
             <TextBlock Style="{StaticResource HeaderTextBlockStyle}"
                        Text="Google Account"></TextBlock>

@@ -112,17 +112,48 @@ namespace MinimalismCalendar.Controllers
             else if (e.PageNavigatedFrom is SettingsPage settingsPageFrom)
             {
                 settingsPageFrom.ConnectServiceRequested -= this.SettingsPage_ConnectServiceRequested;
+                settingsPageFrom.OauthCodeAcquired -= this.SettingsPage_OauthCodeAcquired;
+                settingsPageFrom.RetryOauthRequested -= this.SettingsPage_ConnectServiceRequested;
             }
         }
 
         /// <summary>
-        /// 
+        /// Handles when the user requests to connect a service.S
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void SettingsPage_ConnectServiceRequested(object sender, ConnectServiceRequestedEventArgs e)
         {
             this.ConnectGoogleCalendarAsync();
+
+            if (sender is SettingsPage settingsPage)
+            {
+                settingsPage.ShowServiceOAuthCodeUIAsync(e.ServiceName);
+            }
+        }
+
+        /// <summary>
+        /// Handles when the user has entered an OAuth code to connect a service.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SettingsPage_OauthCodeAcquired(object sender, OauthCodeAcquiredEventArgs e)
+        {
+            // Validate the code.
+            if (String.IsNullOrWhiteSpace(e.Code))
+            {
+                // The code is definitely invalid; no point in reaching out to the server.
+                if (sender is SettingsPage settingsPage)
+                {
+                    string errorMessage = "No code was entered!";
+                    settingsPage.ShowOAuthErrorUIAsync(e.ServiceName, errorMessage);
+                }
+            }
+            else
+            {
+                // Complete the OAuth flow.
+                GoogleCalendarAPI.Instance.GetOauthTokenAsync(e.Code);
+            }
         }
         #endregion
 
@@ -193,11 +224,17 @@ namespace MinimalismCalendar.Controllers
         {
             // Subscribe to the new page's events.
             settingsPage.ConnectServiceRequested += this.SettingsPage_ConnectServiceRequested;
+            settingsPage.OauthCodeAcquired += this.SettingsPage_OauthCodeAcquired;
+            settingsPage.RetryOauthRequested += this.SettingsPage_ConnectServiceRequested;
 
             // Update the Google API status.
             settingsPage.GoogleAuthStatus = GoogleCalendarAPI.IsAuthorized ? "Good to go!" : "Please reconnect.";
         }
 
+        /// <summary>
+        /// Starts an OAuth flow to connect to the Google Calendar API.
+        /// </summary>
+        /// <returns></returns>
         private async Task ConnectGoogleCalendarAsync()
         {
             await GoogleCalendarAPI.Instance.AuthorizeAsync();
