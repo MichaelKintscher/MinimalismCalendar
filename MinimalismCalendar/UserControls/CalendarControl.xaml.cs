@@ -39,6 +39,8 @@ namespace MinimalismCalendar.UserControls
         #endregion
 
         #region Properties
+        private DateTime sunday { get; set; }
+
         private double agendaTimeUnitHeight;
         /// <summary>
         /// Height of each vertical unit of time on the agenda view.
@@ -152,6 +154,28 @@ namespace MinimalismCalendar.UserControls
             //      displaying the affected calendar events.
             this.RefreshDayAgendaControls(this.DayAgendaControls);
         }
+
+        /// <summary>
+        /// Handles when the user taps the button to go back a time step.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BackTimeStepButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Set the control to the previous week.
+            this.SetToWeek(this.sunday.AddDays(-7));
+        }
+
+        /// <summary>
+        /// Handles when the user taps the button to go forward a time step.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ForwardTimeStepButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Set the control to the next week.
+            this.SetToWeek(this.sunday.AddDays(7));
+        }
         #endregion
 
         #region Methods
@@ -170,17 +194,17 @@ namespace MinimalismCalendar.UserControls
         /// <param name="date">The date contained in the week to set the control to.</param>
         public void SetToWeek(DateTime date)
         {
-            DateTime sunday = DateUtility.GetPreviousSunday(date);
+            this.sunday = DateUtility.GetPreviousSunday(date);
 
             // For each day in the week...
             for (int dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
             {
                 // Set the day of the month blocks.
-                this.DayOfMonthTextBlocks[dayOfWeek].Text = sunday.AddDays(dayOfWeek).Day.ToString();
+                this.DayOfMonthTextBlocks[dayOfWeek].Text = this.sunday.AddDays(dayOfWeek).Day.ToString();
             }
 
             // Update the month year text.
-            this.MonthYearText = DateUtility.GetMonthName(sunday.Month) + " " + sunday.Year;
+            this.MonthYearText = DateUtility.GetMonthName(this.sunday.Month) + " " + sunday.Year;
         }
         #endregion
 

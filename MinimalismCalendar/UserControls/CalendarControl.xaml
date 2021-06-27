@@ -32,13 +32,15 @@
 
             <StackPanel Grid.Column="0"
                         Orientation="Horizontal">
-                <Button>
+                <Button x:Name="BackTimeStepButton"
+                        Click="BackTimeStepButton_Click">
                     <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE112;"></FontIcon>
                 </Button>
-                <Button>
+                <Button x:Name="ForwardTimeStepButton"
+                        Click="ForwardTimeStepButton_Click">
                     <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE111;"></FontIcon>
                 </Button>
-                <TextBlock Text="{x:Bind MonthYearText}"
+                <TextBlock Text="{x:Bind MonthYearText, Mode=OneWay}"
                            Margin="5"
                            Style="{StaticResource SubheaderTextBlockStyle}"></TextBlock>
             </StackPanel>
