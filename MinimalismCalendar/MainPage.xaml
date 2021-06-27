@@ -5,8 +5,14 @@
     xmlns:local="using:MinimalismCalendar"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:Converters="using:MinimalismCalendar.Converters"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <Converters:BoolToVisibilityConverter x:Key="TrueToVisibleConverter" TrueVisibility="Visible" FalseVisibility="Collapsed"></Converters:BoolToVisibilityConverter>
+        <Converters:BoolToVisibilityConverter x:Key="FalseToVisibleConverter" TrueVisibility="Collapsed" FalseVisibility="Visible"></Converters:BoolToVisibilityConverter>
+    </Page.Resources>
 
     <Grid>
         <NavigationView x:Name="NavigationView"
@@ -20,6 +26,27 @@
                                     Icon="Home"
                                     Content="Home"
                                     x:Name="HomeNavigationViewItem"></NavigationViewItem>
+                
+                <!-- Internet connection status -->
+                <NavigationViewItem IsEnabled="False">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal"
+                                    Visibility="{x:Bind InternetConnectionAvailable, Mode=OneWay, Converter={StaticResource TrueToVisibleConverter}}">
+                            <FontIcon FontFamily="Segoe MDL2 Assets"
+                                      Glyph="&#xE930;"
+                                      FontSize="14"
+                                      Margin="0,0,5,0"></FontIcon>
+                            <TextBlock Text="Connected"></TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Visibility="{x:Bind InternetConnectionAvailable, Mode=OneWay, Converter={StaticResource FalseToVisibleConverter}}">
+                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xEA39;"
+                                  FontSize="14"
+                                  Margin="0,0,5,0"></FontIcon>
+                            <TextBlock Text="Offline"></TextBlock>
+                        </StackPanel>
+                    </Grid>
+                </NavigationViewItem>
             </NavigationView.MenuItems>
 
             <Frame x:Name="ContentFrame"

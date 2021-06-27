@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Networking.Connectivity;
 using Windows.UI.Xaml.Controls;
 
 namespace MinimalismCalendar.Controllers
@@ -41,6 +42,9 @@ namespace MinimalismCalendar.Controllers
         /// </summary>
         public AppController()
         {
+            // Register for the network status changed event.
+            NetworkInformation.NetworkStatusChanged += this.NetworkStatusChanged;
+
             // Initialize the controller with a main page as the root and the start state for the app navigation.
             this.RootPage = new MainPage();
             this.NavState = new StartState(this);
@@ -48,6 +52,24 @@ namespace MinimalismCalendar.Controllers
         #endregion
 
         #region Event Handlers
+        /// <summary>
+        /// Handles changes in the network connection status.
+        /// </summary>
+        /// <param name="sender"></param>
+        public void NetworkStatusChanged(object sender)
+        {
+            // Need to debug why "Windows.UI.Core>Dispatcher" does not exist.
+            throw new NotImplementedException();
+
+            //// This event is NOT running on the UI thread, so any UI-related
+            ////      work needs to be dispatched on the UI thread.
+            //Windows.UI.Core.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () =>
+            //{
+            //    // Check the network connection status, and respond accordingly.
+            //    this.RefreshInternetConnectionStatus();
+            //});
+        }
+
         /// <summary>
         /// Handles a navigation request between app pages.
         /// </summary>
@@ -102,7 +124,9 @@ namespace MinimalismCalendar.Controllers
             //      so that garbage collection deletes it and prevents a memory leak.
             if (e.PageNavigatedFrom is null)
             {
-                // There is no from page (this is the app initialization), so nothing more to do.
+                // There is no from page (this is the app initialization), so update the internet connection status.
+                // Check the network connection status, and respond accordingly.
+                this.RefreshInternetConnectionStatus();
                 return;
             }
             else if (e.PageNavigatedFrom is HomePage homePageFrom)
@@ -229,6 +253,51 @@ namespace MinimalismCalendar.Controllers
 
             // Update the Google API status.
             settingsPage.GoogleAuthStatus = GoogleCalendarAPI.IsAuthorized ? "Good to go!" : "Please reconnect.";
+        }
+
+        /// <summary>
+        /// Updates the app depending on the availability of an internet connection.
+        /// </summary>
+        private void RefreshInternetConnectionStatus()
+        {
+            ConnectionProfile internetConnectionProfile = NetworkInformation.GetInternetConnectionProfile();
+
+            // Change to offline mode if no profile was found, then return.
+            if (internetConnectionProfile == null)
+            {
+                this.ChangeToOfflineMode();
+                return;
+            }
+
+            // A profile was found. Check the network connectivity level.
+            NetworkConnectivityLevel networkConnectivityLevel = internetConnectionProfile.GetNetworkConnectivityLevel();
+            switch (networkConnectivityLevel)
+            {
+                // No connection detected... change to offline mode.
+                case NetworkConnectivityLevel.None:
+                    this.ChangeToOfflineMode();
+                    break;
+                case NetworkConnectivityLevel.LocalAccess:
+                    break;
+                case NetworkConnectivityLevel.ConstrainedInternetAccess:
+                    break;
+                case NetworkConnectivityLevel.InternetAccess:
+                    break;
+                default:
+                    break;
+            }
+
+            System.Diagnostics.Debug.WriteLine("Internet connection state: " + networkConnectivityLevel);
+        }
+
+        /// <summary>
+        /// Updates the app to offline mode.
+        /// </summary>
+        private void ChangeToOfflineMode()
+        {
+            // Update the relevant property of the main page.
+            this.RootPage.InternetConnectionAvailable = false;
+            System.Diagnostics.Debug.WriteLine("You went offline!");
         }
 
         /// <summary>

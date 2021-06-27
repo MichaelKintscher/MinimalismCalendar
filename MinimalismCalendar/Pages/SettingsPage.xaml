@@ -5,8 +5,13 @@
     xmlns:local="using:MinimalismCalendar.Pages"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:Converters="using:MinimalismCalendar.Converters"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <Converters:BoolToVisibilityConverter x:Key="FalseToVisibleConverter" TrueVisibility="Collapsed" FalseVisibility="Visible"></Converters:BoolToVisibilityConverter>
+    </Page.Resources>
 
     <Grid>
         <!-- The content dialog for authentication errors. -->
@@ -28,15 +33,28 @@
                 <TextBox x:Name="ServiceOauthCodeTextBox"></TextBox>
             </StackPanel>
         </ContentDialog>
-        
+
         <StackPanel>
-            <TextBlock Style="{StaticResource HeaderTextBlockStyle}"
-                       Text="Google Account"></TextBlock>
-            <Button x:Name="AuthenticateGoogleButton"
-                    Click="AuthenticateGoogleButton_Click"> Authenticate</Button>
-            <TextBlock x:Name="AuthStatusTextBlock"
-                       Text="{x:Bind GoogleAuthStatus}"></TextBlock>
-            <TextBlock x:Name="CalendarEventTestTextBlock"></TextBlock>
+            <StackPanel Orientation="Horizontal"
+                        Visibility="{x:Bind InternetConnectionAvailable, Converter={StaticResource FalseToVisibleConverter}}"
+                        Margin="10">
+                <FontIcon FontFamily="Segoe MDL2 Assets"
+                          Glyph="&#xE783;"
+                          FontSize="14"
+                          Margin="0,0,5,0"></FontIcon>
+                <TextBlock Text="Please reconnect to the internet to adjust settings for connected services."></TextBlock>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Style="{StaticResource HeaderTextBlockStyle}"
+                           Text="Google Account"></TextBlock>
+                <!-- Button is disabled when no internet connection is available. -->
+                <Button x:Name="AuthenticateGoogleButton"
+                        IsEnabled="{x:Bind InternetConnectionAvailable}"
+                        Click="AuthenticateGoogleButton_Click"> Authenticate</Button>
+                <TextBlock x:Name="AuthStatusTextBlock"
+                           Text="{x:Bind GoogleAuthStatus}"></TextBlock>
+                <TextBlock x:Name="CalendarEventTestTextBlock"></TextBlock>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Page>

@@ -39,6 +39,20 @@ namespace MinimalismCalendar.Pages
                 this.RaisePropertyChanged("GoogleAuthStatus");
             }
         }
+
+        private bool internetConnectionAvailable;
+        /// <summary>
+        /// Whether an internet connection is currently available.
+        /// </summary>
+        public bool InternetConnectionAvailable
+        {
+            get => this.internetConnectionAvailable;
+            set
+            {
+                this.internetConnectionAvailable = value;
+                this.RaisePropertyChanged("InternetConnectionAvailable");
+            }
+        }
         #endregion
 
         #region Events

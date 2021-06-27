@@ -3,6 +3,7 @@ using MinimalismCalendar.EventArguments;
 using MinimalismCalendar.Pages;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -23,9 +24,29 @@ namespace MinimalismCalendar
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainPage : Page
+    public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
         #region Properties
+        private bool internetConnectionAvailable;
+        /// <summary>
+        /// Whether an internet connection is currently available.
+        /// </summary>
+        public bool InternetConnectionAvailable
+        {
+            get => this.internetConnectionAvailable;
+            set
+            {
+                this.internetConnectionAvailable = value;
+                this.RaisePropertyChanged("InternetConnectionAvailable");
+
+                // Update the child view.
+                if (this.CurrentNavViewPage is SettingsPage settingsPage)
+                {
+                    settingsPage.InternetConnectionAvailable = value;
+                }
+            }
+        }
+
         /// <summary>
         /// List of values to convert between page types and tags.
         /// </summary>
@@ -42,6 +63,19 @@ namespace MinimalismCalendar
         #endregion
 
         #region Events
+        public event PropertyChangedEventHandler PropertyChanged;
+        /// <summary>
+        /// Raise the PropertChanged event for the given property name.
+        /// </summary>
+        /// <param name="name">Name of the property changed.</param>
+        public void RaisePropertyChanged(string name)
+        {
+            if (this.PropertyChanged != null)
+            {
+                this.PropertyChanged(this, new PropertyChangedEventArgs(name));
+            }
+        }
+
         public delegate void NavigationRequestedHandler(object sender, NavigationRequestedEventArgs e);
         /// <summary>
         /// Raised when the user indicated they want to navigate.
