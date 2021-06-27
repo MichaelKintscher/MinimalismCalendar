@@ -9,51 +9,58 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
+    <Page.Resources>
+        <Flyout x:Key="CalendarViewFlyout">
+            <CalendarView></CalendarView>
+        </Flyout>
+        
+        <!-- Style Definitions -->
+        <Style x:Key="SplitViewPaneButtonStyle" TargetType="Button">
+            <Setter Property="HorizontalAlignment" Value="Stretch"></Setter>
+            <Setter Property="HorizontalContentAlignment" Value="Left"></Setter>
+        </Style>
+        <Style x:Key="SplitViewPaneButtonIconStyle" TargetType="FontIcon">
+            <Setter Property="Margin" Value="5"></Setter>
+        </Style>
+    </Page.Resources>
+
     <Grid>
-        <SplitView IsPaneOpen="True"
-                   DisplayMode="Inline">
+        <SplitView x:Name="MainSplitView"
+                   DisplayMode="CompactOverlay">
             <SplitView.Pane>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"></RowDefinition>
-                        <RowDefinition Height="Auto"></RowDefinition>
-                        <RowDefinition Height="*"></RowDefinition>
-                        <RowDefinition Height="Auto"></RowDefinition>
-                    </Grid.RowDefinitions>
-                    
-                    <CalendarView Grid.Row="0"
-                                  HorizontalAlignment="Stretch"></CalendarView>
-                    
+                <StackPanel>
+                    <Button x:Name="SplitViewPaneToggleButton"
+                            Click="SplitViewPaneToggleButton_Click">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE700;"
+                                      Style="{StaticResource SplitViewPaneButtonIconStyle}"></FontIcon>
+                    </Button>
                     <Button x:Name="NewEventButton"
-                            Grid.Row="1"
-                            HorizontalAlignment="Stretch">
+                            Style="{StaticResource SplitViewPaneButtonStyle}">
                         <StackPanel Orientation="Horizontal">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE109;"></FontIcon>
+                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE109;"
+                                      Style="{StaticResource SplitViewPaneButtonIconStyle}"></FontIcon>
                             <TextBlock Text="New Event"
                                    Margin="10,0,0,0"
                                    FontSize="24"></TextBlock>
                         </StackPanel>
                     </Button>
-                    
-                    <ListView Header="Calendars"
-                              Grid.Row="2"
-                              HorizontalAlignment="Stretch"></ListView>
-                    
+
                     <Button x:Name="EditCalendarsButton"
-                            Grid.Row="3"
-                            HorizontalAlignment="Stretch">
+                            Style="{StaticResource SplitViewPaneButtonStyle}">
                         <StackPanel Orientation="Horizontal">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE787;"></FontIcon>
+                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE787;"
+                                      Style="{StaticResource SplitViewPaneButtonIconStyle}"></FontIcon>
                             <TextBlock Text="Edit Calendars"
                                    Margin="10,0,0,0"
                                    FontSize="24"></TextBlock>
                         </StackPanel>
                     </Button>
-                </Grid>
+                </StackPanel>
             </SplitView.Pane>
             
             <!-- Main Calendar View -->
-            <usercontrols:CalendarControl x:Name="CalendarControl"></usercontrols:CalendarControl>
+            <usercontrols:CalendarControl x:Name="CalendarControl"
+                                          Margin="5,0,0,0"></usercontrols:CalendarControl>
         </SplitView>
     </Grid>
 </Page>

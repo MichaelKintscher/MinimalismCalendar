@@ -17,6 +17,7 @@
     <Grid>
         <NavigationView x:Name="NavigationView"
                         PaneDisplayMode="Top"
+                        AlwaysShowHeader="False"
                         PaneTitle="Time Blocking App"
                         BackRequested="NavigationView_BackRequested"
                         ItemInvoked="NavigationView_ItemInvoked"

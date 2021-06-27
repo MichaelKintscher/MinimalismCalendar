@@ -187,7 +187,7 @@ namespace MinimalismCalendar
             {
                 // SettingsItem is not part of NavView.MenuItems, and doesn't have a Tag.
                 this.NavigationView.SelectedItem = (NavigationViewItem)this.NavigationView.SettingsItem;
-                this.NavigationView.Header = "Settings";
+                //this.NavigationView.Header = "Settings";
             }
             else if (ContentFrame.SourcePageType != null)
             {
@@ -197,7 +197,7 @@ namespace MinimalismCalendar
                     .OfType<NavigationViewItem>()
                     .First(n => n.Tag.Equals(item.Tag.ToString()));
 
-                this.NavigationView.Header = ((NavigationViewItem)this.NavigationView.SelectedItem)?.Content?.ToString();
+                //this.NavigationView.Header = ((NavigationViewItem)this.NavigationView.SelectedItem)?.Content?.ToString();
             }
 
             // Raise the navigated event.
