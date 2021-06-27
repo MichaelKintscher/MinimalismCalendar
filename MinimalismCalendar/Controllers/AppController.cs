@@ -58,16 +58,13 @@ namespace MinimalismCalendar.Controllers
         /// <param name="sender"></param>
         public void NetworkStatusChanged(object sender)
         {
-            // Need to debug why "Windows.UI.Core>Dispatcher" does not exist.
-            throw new NotImplementedException();
-
-            //// This event is NOT running on the UI thread, so any UI-related
-            ////      work needs to be dispatched on the UI thread.
-            //Windows.UI.Core.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () =>
-            //{
-            //    // Check the network connection status, and respond accordingly.
-            //    this.RefreshInternetConnectionStatus();
-            //});
+            // This event is NOT running on the UI thread, so any UI-related
+            //      work needs to be dispatched on the UI thread.
+            this.RootPage.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () =>
+            {
+                // Check the network connection status, and respond accordingly.
+                this.RefreshInternetConnectionStatus();
+            });
         }
 
         /// <summary>
