@@ -9,11 +9,7 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Page.Resources>
-        <Flyout x:Key="CalendarViewFlyout">
-            <CalendarView></CalendarView>
-        </Flyout>
-        
+    <Page.Resources>        
         <!-- Style Definitions -->
         <Style x:Key="SplitViewPaneButtonStyle" TargetType="Button">
             <Setter Property="HorizontalAlignment" Value="Stretch"></Setter>

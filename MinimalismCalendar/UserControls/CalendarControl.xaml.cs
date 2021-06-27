@@ -176,6 +176,33 @@ namespace MinimalismCalendar.UserControls
             // Set the control to the next week.
             this.SetToWeek(this.sunday.AddDays(7));
         }
+
+        /// <summary>
+        /// Handles when the user taps the button to return the view to today.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void GoToTodayButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Set the control to today.
+            this.SetToWeek(DateTime.Now);
+        }
+
+        /// <summary>
+        /// Handles when the selected date in the calendar view flyout is changed.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        private void CalendarView_SelectedDatesChanged(CalendarView sender, CalendarViewSelectedDatesChangedEventArgs args)
+        {
+            // Get the newly selected date.
+            DateTimeOffset selectedDateTime = sender.SelectedDates.FirstOrDefault();
+            if (selectedDateTime != null)
+            {
+                // Set the control to the selected date.
+                this.SetToWeek(selectedDateTime.Date);
+            }
+        }
         #endregion
 
         #region Methods

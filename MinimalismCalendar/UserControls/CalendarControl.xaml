@@ -10,6 +10,13 @@
     d:DesignWidth="400">
 
     <UserControl.Resources>
+        <Flyout x:Key="CalendarViewFlyout">
+            <CalendarView x:Name="CalendarView"
+                          SelectionMode="Single"
+                          SelectedDatesChanged="CalendarView_SelectedDatesChanged"></CalendarView>
+        </Flyout>
+        
+        <!-- Style definitions -->
         <Style x:Key="AgendaTimeTextBlockStyle"
                TargetType="TextBlock">
             <Setter Property="Width" Value="20"></Setter>
@@ -40,10 +47,23 @@
                         Click="ForwardTimeStepButton_Click">
                     <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE111;"></FontIcon>
                 </Button>
-                <TextBlock Text="{x:Bind MonthYearText, Mode=OneWay}"
-                           Margin="5"
-                           Style="{StaticResource SubheaderTextBlockStyle}"></TextBlock>
+                <Button Flyout="{StaticResource CalendarViewFlyout}">
+                    <TextBlock Text="{x:Bind MonthYearText, Mode=OneWay}"
+                               Margin="5"
+                               Style="{StaticResource SubheaderTextBlockStyle}"></TextBlock>
+                </Button>
             </StackPanel>
+
+            <Button x:Name="GoToTodayButton"
+                    Grid.Column="2"
+                    Click="GoToTodayButton_Click">
+                <StackPanel Orientation="Horizontal">
+                    <FontIcon FontFamily="Segoe MDL2 Assets"
+                              Glyph="&#xE184;"></FontIcon>
+                    <TextBlock Margin="5,0,0,0"
+                               Text="Today"></TextBlock>
+                </StackPanel>
+            </Button>
         </Grid>
 
         <Grid Grid.Row="1">
