@@ -23,7 +23,26 @@
             <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0">Header</TextBlock>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="Auto"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0"
+                        Orientation="Horizontal">
+                <Button>
+                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE112;"></FontIcon>
+                </Button>
+                <Button>
+                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE111;"></FontIcon>
+                </Button>
+                <TextBlock Text="{x:Bind MonthYearText}"
+                           Margin="5"
+                           Style="{StaticResource SubheaderTextBlockStyle}"></TextBlock>
+            </StackPanel>
+        </Grid>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>

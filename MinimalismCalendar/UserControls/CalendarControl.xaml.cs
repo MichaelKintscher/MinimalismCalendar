@@ -53,6 +53,17 @@ namespace MinimalismCalendar.UserControls
             }
         }
 
+        private string monthYearText;
+        private string MonthYearText
+        {
+            get => this.monthYearText;
+            set
+            {
+                this.monthYearText = value;
+                this.RaisePropertyChanged("MonthYearText");
+            }
+        }
+
         /// <summary>
         /// The list of calendar events the control CAN display. (The control is not
         /// necessarily actively displaying all at once - the control manages the
@@ -167,6 +178,9 @@ namespace MinimalismCalendar.UserControls
                 // Set the day of the month blocks.
                 this.DayOfMonthTextBlocks[dayOfWeek].Text = sunday.AddDays(dayOfWeek).Day.ToString();
             }
+
+            // Update the month year text.
+            this.MonthYearText = DateUtility.GetMonthName(sunday.Month) + " " + sunday.Year;
         }
         #endregion
 
