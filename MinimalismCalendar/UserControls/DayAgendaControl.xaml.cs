@@ -33,19 +33,7 @@ namespace MinimalismCalendar.UserControls
         private List<Border> eventBlocks;
 
         #region Properties
-        private int dayOfMonth;
-        /// <summary>
-        /// The day of the month the agenda control is set to.
-        /// </summary>
-        public int DayOfMonth
-        {
-            get => this.dayOfMonth;
-            set
-            {
-                this.dayOfMonth = value;
-                this.RaisePropertyChanged("DayOfMonth");
-            }
-        }
+        public DateTime Date { get; set; }
 
         private double agendaTimeUnitHeight;
         /// <summary>
@@ -153,6 +141,16 @@ namespace MinimalismCalendar.UserControls
 
             // Use this line to observe unecessary repetitions of this event call.
             System.Diagnostics.Debug.WriteLine("AddEvent executed from " + this.Name +" control for event name: " + calEvent.Name);
+        }
+
+        /// <summary>
+        /// Clears the events from the control.
+        /// </summary>
+        public void Clear()
+        {
+            this.eventBlocks.Clear();
+            this.AgendaCanvas.Children.Clear();
+            this.CalendarEvents.Clear();
         }
         #endregion
     }

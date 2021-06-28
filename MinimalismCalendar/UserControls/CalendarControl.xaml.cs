@@ -227,11 +227,16 @@ namespace MinimalismCalendar.UserControls
             for (int dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
             {
                 // Set the day of the month blocks.
-                this.DayOfMonthTextBlocks[dayOfWeek].Text = this.sunday.AddDays(dayOfWeek).Day.ToString();
+                DateTime dateForAgendaControl = this.sunday.AddDays(dayOfWeek);
+                this.DayOfMonthTextBlocks[dayOfWeek].Text = dateForAgendaControl.Day.ToString();
+                this.DayAgendaControls[dayOfWeek].Date = dateForAgendaControl;
             }
 
             // Update the month year text.
             this.MonthYearText = DateUtility.GetMonthName(this.sunday.Month) + " " + sunday.Year;
+
+            // Refresh the agenda controls.
+            this.RefreshDayAgendaControls(this.DayAgendaControls);
         }
         #endregion
 
@@ -255,13 +260,15 @@ namespace MinimalismCalendar.UserControls
         private void RefreshDayAgendaControl(DayAgendaControl control)
         {
             // Clear the existing events.
-            control.CalendarEvents.Clear();
+            control.Clear();
 
             // Add the updated list of events to the control.
             //      NOTE: this can be optimized in two ways:
             //          1) only refresh the changed events
             //          2) only provide a list of events for the day the control is displaying
-            foreach (CalendarEvent calEvent in this.CalendarEvents.ToList())
+            List<CalendarEvent> eventsOnDay = this.CalendarEvents.Where(e =>
+                                                                e.Start.Date == control.Date.Date).ToList();
+            foreach (CalendarEvent calEvent in eventsOnDay)
             {
                 control.CalendarEvents.Add(calEvent);
             }
