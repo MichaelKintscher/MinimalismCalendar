@@ -8,9 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Data.Json;
 using Windows.Storage;
 using Xamarin.Essentials;
 
@@ -39,6 +41,19 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// The name of the application to present to the API.
         /// </summary>
         private static readonly string applicationName = "Minimalism Calendar";
+        /// <summary>
+        /// The base uri for Google OAuth 2.0
+        /// </summary>
+        public static readonly string oauthBaseUri = "https://accounts.google.com/o/oauth2/v2/auth";
+        /// <summary>
+        /// The redirect uri for the OAuth 2.0 flow. This is the special value Google uses to indicate a manual redirect.
+        /// See: https://developers.google.com/identity/protocols/oauth2/native-app
+        /// </summary>
+        public static readonly string oauthRedirectUri = "urn:ietf:wg:oauth:2.0:oob";
+        /// <summary>
+        /// The endpoint uri for exchanging the authorization code for an access token.
+        /// </summary>
+        private static readonly string oauthTokenEndpoint = "https://oauth2.googleapis.com/token";
         #endregion
 
         #region Properties
@@ -46,6 +61,8 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// A cache of the authorized user credential for the Google Calendar API.
         /// </summary>
         private static UserCredential credential = null;
+
+        private HttpClient WebClient { get; set; }
 
         /// <summary>
         /// Returns whether the user has authorized the app with the API.
@@ -55,10 +72,13 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             // The credential property contains a value if the app has previously been authorized.
             get => GoogleCalendarAPI.credential != null;
         }
+        #endregion
 
-        public static readonly string baseUri = "https://accounts.google.com/o/oauth2/v2/auth";
-
-        public static readonly string redirectUri = "urn:ietf:wg:oauth:2.0:oob";
+        #region Constructors
+        public GoogleCalendarAPI()
+        {
+            this.WebClient = new HttpClient();
+        }
         #endregion
 
         #region Methods
@@ -82,12 +102,47 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// Completes the OAuth flow by exchanging the given authorization code for a token.
         /// </summary>
         /// <param name="authorizationCode">The authorization code to exchange for the token.</param>
-        /// <returns>The authorization token to use in future API calls.</returns>
-        public async Task<string> GetOauthTokenAsync(string authorizationCode)
+        public async Task GetOauthTokenAsync(string authorizationCode)
         {
             System.Diagnostics.Debug.WriteLine("Getting token using code: " + authorizationCode);
 
-            return "";
+            // Open the secrets file to read the client ID.
+            using (var stream = new FileStream(GoogleCalendarAPI.credentialsFilePath, FileMode.Open, FileAccess.Read))
+            {
+                // Make a client specifically for exchanging tokens.
+                using (HttpClient tokenClient = new HttpClient())
+                {
+                    // Read the client ID and secret from their file.
+                    ClientSecrets secrets = GoogleClientSecrets.Load(stream).Secrets;
+
+                    // Add the parameters to the OAuth token exchange endpoint.
+                    string tokenExchangeUri = GoogleCalendarAPI.oauthTokenEndpoint +
+                                                "?client_id=" + secrets.ClientId +
+                                                "&client_secret=" + secrets.ClientSecret +
+                                                "&code=" + authorizationCode;
+
+                    // Use http GET to get a response from the token endpoint.
+                    HttpResponseMessage response = new HttpResponseMessage();
+                    try
+                    {
+                        response = await tokenClient.GetAsync(new Uri(tokenExchangeUri));
+                        response.EnsureSuccessStatusCode();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Error in HTTP response: " + ex.Message);
+                    }
+
+                    // No exceptions were thrown, so parse the response message.
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    JsonObject responseJson = JsonObject.Parse(responseContent);
+                    string token = responseJson["access_token"].GetString();
+
+                    // Set the token as part of the authorization header for the web client used to make API calls.
+                    this.WebClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                    System.Diagnostics.Debug.WriteLine("Token obtained: " + token);
+                }
+            }
         }
 
         /// <summary>
@@ -143,9 +198,9 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                 ClientSecrets secrets = GoogleClientSecrets.Load(stream).Secrets;
 
                 // Create the start URI
-                string startUrl = GoogleCalendarAPI.baseUri +
+                string startUrl = GoogleCalendarAPI.oauthBaseUri +
                                     "?client_id=" + secrets.ClientId +
-                                    "&redirect_uri=" + GoogleCalendarAPI.redirectUri +
+                                    "&redirect_uri=" + GoogleCalendarAPI.oauthRedirectUri +
                                     "&response_type=code" +
                                     "&scope=" + scopesString.ToString();
                 return new Uri(startUrl);
