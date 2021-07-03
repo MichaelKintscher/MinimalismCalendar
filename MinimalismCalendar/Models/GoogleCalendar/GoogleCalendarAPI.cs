@@ -1,4 +1,5 @@
 ﻿using Google.Apis.Auth.OAuth2;
+using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
@@ -8,12 +9,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Data.Json;
 using Windows.Storage;
+using Windows.Web.Http;
 using Xamarin.Essentials;
 
 namespace MinimalismCalendar.Models.GoogleCalendar
@@ -60,17 +61,17 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// <summary>
         /// A cache of the authorized user credential for the Google Calendar API.
         /// </summary>
-        private static UserCredential credential = null;
+        private UserCredential credential = null;
 
         private HttpClient WebClient { get; set; }
 
         /// <summary>
         /// Returns whether the user has authorized the app with the API.
         /// </summary>
-        public static bool IsAuthorized
+        public bool IsAuthorized
         {
             // The credential property contains a value if the app has previously been authorized.
-            get => GoogleCalendarAPI.credential != null;
+            get => this.credential != null;
         }
         #endregion
 
@@ -119,13 +120,24 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                     string tokenExchangeUri = GoogleCalendarAPI.oauthTokenEndpoint +
                                                 "?client_id=" + secrets.ClientId +
                                                 "&client_secret=" + secrets.ClientSecret +
-                                                "&code=" + authorizationCode;
+                                                "&code=" + authorizationCode +
+                                                "&redirect_uri=" + GoogleCalendarAPI.oauthRedirectUri +
+                                                "&grant_type=" + "authorization_code";
+
+                    HttpFormUrlEncodedContent content = new HttpFormUrlEncodedContent(new List<KeyValuePair<string, string>>()
+                    {
+                        new KeyValuePair<string, string>("client_id", secrets.ClientId),
+                        new KeyValuePair<string, string>("client_secret", secrets.ClientSecret),
+                        new KeyValuePair<string, string>("code", authorizationCode),
+                        new KeyValuePair<string, string>("redirect_uri", GoogleCalendarAPI.oauthRedirectUri),
+                        new KeyValuePair<string, string>("grant_type", "authorization_code")
+                    });
 
                     // Use http GET to get a response from the token endpoint.
                     HttpResponseMessage response = new HttpResponseMessage();
                     try
                     {
-                        response = await tokenClient.GetAsync(new Uri(tokenExchangeUri));
+                        response = await tokenClient.PostAsync(new Uri(GoogleCalendarAPI.oauthTokenEndpoint), content);
                         response.EnsureSuccessStatusCode();
                     }
                     catch (Exception ex)
@@ -135,12 +147,15 @@ namespace MinimalismCalendar.Models.GoogleCalendar
 
                     // No exceptions were thrown, so parse the response message.
                     string responseContent = await response.Content.ReadAsStringAsync();
-                    JsonObject responseJson = JsonObject.Parse(responseContent);
-                    string token = responseJson["access_token"].GetString();
+
 
                     // Set the token as part of the authorization header for the web client used to make API calls.
-                    this.WebClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                    System.Diagnostics.Debug.WriteLine("Token obtained: " + token);
+                    //JsonObject responseJson = JsonObject.Parse(responseContent);
+                    //string token = responseJson["access_token"].GetString();
+                    //this.WebClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                    //System.Diagnostics.Debug.WriteLine("Token obtained: " + token);
+
+                    this.credential = this.ConvertToCredential(responseContent);
                 }
             }
         }
@@ -152,7 +167,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         public async Task<List<CalendarEvent>> GetCalendarEventsAsync()
         {
             // Authorize if not already done so.
-            if (!GoogleCalendarAPI.IsAuthorized)
+            if (!this.IsAuthorized)
             {
                 await this.AuthorizeAsync();
             }
@@ -205,6 +220,31 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                                     "&scope=" + scopesString.ToString();
                 return new Uri(startUrl);
             }
+        }
+
+        private UserCredential ConvertToCredential(string responseContent)
+        {
+            JsonObject responseJson = JsonObject.Parse(responseContent);
+            string token = responseJson["access_token"].GetString();
+            long expiresInSeconds = (long)responseJson["expires_in"].GetNumber();
+            string tokenType = responseJson["token_type"].GetString();
+            string scope = responseJson["scope"].GetString();
+            string refreshToken = responseJson["refresh_token"].GetString();
+
+            AuthorizationCodeFlow flow = new AuthorizationCodeFlow(new AuthorizationCodeFlow.Initializer(GoogleCalendarAPI.oauthBaseUri, GoogleCalendarAPI.oauthTokenEndpoint));
+            return new UserCredential(
+                        flow,
+                        "",
+                        new Google.Apis.Auth.OAuth2.Responses.TokenResponse()
+                        {
+                            AccessToken = token,
+                            TokenType = tokenType,
+                            ExpiresInSeconds = expiresInSeconds,
+                            RefreshToken = refreshToken,
+                            Scope = scope,
+                            IdToken = "",
+                            IssuedUtc = DateTime.UtcNow
+                        });
         }
 
         /// <summary>

@@ -257,7 +257,7 @@ namespace MinimalismCalendar.Controllers
             settingsPage.RetryOauthRequested += this.SettingsPage_ConnectServiceRequested;
 
             // Update the Google API status.
-            settingsPage.GoogleAuthStatus = GoogleCalendarAPI.IsAuthorized ? "Good to go!" : "Please reconnect.";
+            settingsPage.GoogleAuthStatus = GoogleCalendarAPI.Instance.IsAuthorized ? "Good to go!" : "Please reconnect.";
         }
 
         /// <summary>
