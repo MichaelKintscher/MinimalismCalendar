@@ -108,34 +108,42 @@ namespace MinimalismCalendar.Controllers
             this.CurrentPage = e.PageNavigatedTo;
 
             // Initialize the new page.
+            string toPageName = "";
             if (e.PageNavigatedTo is HomePage homePage)
             {
                 this.InitializeHomePage(homePage);
+                toPageName = "Home Page";
             }
             else if (e.PageNavigatedTo is SettingsPage settingsPage)
             {
                 this.InitializeSettingsPage(settingsPage);
+                toPageName = "Settings Page";
             }
 
             // Unsubscribe from the old page's events. This is to clear any handles on the page
             //      so that garbage collection deletes it and prevents a memory leak.
+            string fromPageName = "";
             if (e.PageNavigatedFrom is null)
             {
-                // There is no from page (this is the app initialization), so update the internet connection status.
-                // Check the network connection status, and respond accordingly.
-                this.RefreshInternetConnectionStatus();
-                return;
+                // There is no from page (this is the app initialization).
+                fromPageName = "App Launch";
             }
             else if (e.PageNavigatedFrom is HomePage homePageFrom)
             {
-
+                fromPageName = "Home Page";
             }
             else if (e.PageNavigatedFrom is SettingsPage settingsPageFrom)
             {
                 settingsPageFrom.ConnectServiceRequested -= this.SettingsPage_ConnectServiceRequested;
                 settingsPageFrom.OauthCodeAcquired -= this.SettingsPage_OauthCodeAcquired;
                 settingsPageFrom.RetryOauthRequested -= this.SettingsPage_ConnectServiceRequested;
+                fromPageName = "Settings Page";
             }
+
+            // Check the network connection status, and respond accordingly.
+            this.RefreshInternetConnectionStatus();
+
+            System.Diagnostics.Debug.WriteLine("Navigated to " + toPageName + " from " + fromPageName);
         }
 
         /// <summary>
@@ -262,7 +270,7 @@ namespace MinimalismCalendar.Controllers
             // Change to offline mode if no profile was found, then return.
             if (internetConnectionProfile == null)
             {
-                this.ChangeToOfflineMode();
+                this.ChangeOnlineMode(false);
                 return;
             }
 
@@ -272,13 +280,14 @@ namespace MinimalismCalendar.Controllers
             {
                 // No connection detected... change to offline mode.
                 case NetworkConnectivityLevel.None:
-                    this.ChangeToOfflineMode();
+                    this.ChangeOnlineMode(false);
                     break;
                 case NetworkConnectivityLevel.LocalAccess:
                     break;
                 case NetworkConnectivityLevel.ConstrainedInternetAccess:
                     break;
                 case NetworkConnectivityLevel.InternetAccess:
+                    this.ChangeOnlineMode(true);
                     break;
                 default:
                     break;
@@ -288,13 +297,14 @@ namespace MinimalismCalendar.Controllers
         }
 
         /// <summary>
-        /// Updates the app to offline mode.
+        /// Updates the app to the given online state.
         /// </summary>
-        private void ChangeToOfflineMode()
+        /// <param name="online">Whether internet access is available or not.</param>
+        private void ChangeOnlineMode(bool online)
         {
             // Update the relevant property of the main page.
-            this.RootPage.InternetConnectionAvailable = false;
-            System.Diagnostics.Debug.WriteLine("You went offline!");
+            this.RootPage.InternetConnectionAvailable = online;
+            System.Diagnostics.Debug.WriteLine("You went " + (online? "online" : "offline") + " !");
         }
 
         /// <summary>

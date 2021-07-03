@@ -36,7 +36,7 @@
 
         <StackPanel>
             <StackPanel Orientation="Horizontal"
-                        Visibility="{x:Bind InternetConnectionAvailable, Converter={StaticResource FalseToVisibleConverter}}"
+                        Visibility="{x:Bind InternetConnectionAvailable, Mode=OneWay, Converter={StaticResource FalseToVisibleConverter}}"
                         Margin="10">
                 <FontIcon FontFamily="Segoe MDL2 Assets"
                           Glyph="&#xE783;"
@@ -49,7 +49,7 @@
                            Text="Google Account"></TextBlock>
                 <!-- Button is disabled when no internet connection is available. -->
                 <Button x:Name="AuthenticateGoogleButton"
-                        IsEnabled="{x:Bind InternetConnectionAvailable}"
+                        IsEnabled="{x:Bind InternetConnectionAvailable, Mode=OneWay}"
                         Click="AuthenticateGoogleButton_Click"> Authenticate</Button>
                 <TextBlock x:Name="AuthStatusTextBlock"
                            Text="{x:Bind GoogleAuthStatus}"></TextBlock>

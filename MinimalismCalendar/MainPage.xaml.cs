@@ -40,7 +40,7 @@ namespace MinimalismCalendar
                 this.RaisePropertyChanged("InternetConnectionAvailable");
 
                 // Update the child view.
-                if (this.CurrentNavViewPage is SettingsPage settingsPage)
+                if (this.ContentFrame.Content is SettingsPage settingsPage)
                 {
                     settingsPage.InternetConnectionAvailable = value;
                 }
@@ -236,6 +236,9 @@ namespace MinimalismCalendar
         {
             if (this.ContentFrame.CanGoBack)
             {
+                // Grab the current page prior to navigation.
+                this.CurrentNavViewPage = this.ContentFrame.Content as Page;
+
                 this.ContentFrame.GoBack();
             }
         }
