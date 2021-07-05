@@ -17,9 +17,32 @@
         </Flyout>
         
         <!-- Style definitions -->
+        <Style x:Key="WeekdayTextBlockBorderStyle" TargetType="Border">
+            <Setter Property="BorderBrush" Value="SlateGray"></Setter>
+            <Setter Property="BorderThickness" Value="0"></Setter>
+        </Style>
+        <Style x:Key="WeekdayTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="10,5,5,5"></Setter>
+        </Style>
+        
+        <Style x:Key="DayOfMonthTextBlockBorderStyle" TargetType="Border">
+            <Setter Property="BorderBrush" Value="SlateGray"></Setter>
+            <Setter Property="BorderThickness" Value="1,1,0,1"></Setter>
+            <Setter Property="MinHeight" Value="50"></Setter>
+        </Style>
+        <Style x:Key="DayOfMonthTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="10,5,5,5"></Setter>
+        </Style>
+        
+        <Style x:Key="AgendaTimeTextBlockBorderStyle" TargetType="Border">
+            <Setter Property="BorderBrush" Value="SlateGray"></Setter>
+            <Setter Property="BorderThickness" Value="0,1,0,0"></Setter>
+        </Style>
+        
         <Style x:Key="AgendaTimeTextBlockStyle"
                TargetType="TextBlock">
             <Setter Property="Width" Value="20"></Setter>
+            <Setter Property="Height" Value="{x:Bind AgendaTimeUnitHeight, Mode=OneWay}"></Setter>
         </Style>
     </UserControl.Resources>
 
@@ -81,38 +104,66 @@
             <!-- Day headers -->
             <StackPanel Grid.Row="0"
                             Grid.Column="1">
-                <TextBlock>Sunday</TextBlock>
-                <TextBlock x:Name="DayOfMonth0TextBlock"></TextBlock>
+                <Border Style="{StaticResource WeekdayTextBlockBorderStyle}">
+                    <TextBlock Style="{StaticResource WeekdayTextBlockStyle}">Sunday</TextBlock>
+                </Border>
+                <Border Style="{StaticResource DayOfMonthTextBlockBorderStyle}">
+                    <TextBlock x:Name="DayOfMonth0TextBlock" Style="{StaticResource DayOfMonthTextBlockStyle}"></TextBlock>
+                </Border>
             </StackPanel>
             <StackPanel Grid.Row="0"
                             Grid.Column="2">
-                <TextBlock>Monday</TextBlock>
-                <TextBlock x:Name="DayOfMonth1TextBlock"></TextBlock>
+                <Border Style="{StaticResource WeekdayTextBlockBorderStyle}">
+                    <TextBlock Style="{StaticResource WeekdayTextBlockStyle}">Monday</TextBlock>
+                </Border>
+                <Border Style="{StaticResource DayOfMonthTextBlockBorderStyle}">
+                    <TextBlock x:Name="DayOfMonth1TextBlock" Style="{StaticResource DayOfMonthTextBlockStyle}"></TextBlock>
+                </Border>
             </StackPanel>
             <StackPanel Grid.Row="0"
                             Grid.Column="3">
-                <TextBlock>Tuesday</TextBlock>
-                <TextBlock x:Name="DayOfMonth2TextBlock"></TextBlock>
+                <Border Style="{StaticResource WeekdayTextBlockBorderStyle}">
+                    <TextBlock Style="{StaticResource WeekdayTextBlockStyle}">Tuesday</TextBlock>
+                </Border>
+                <Border Style="{StaticResource DayOfMonthTextBlockBorderStyle}">
+                    <TextBlock x:Name="DayOfMonth2TextBlock" Style="{StaticResource DayOfMonthTextBlockStyle}"></TextBlock>
+                </Border>
             </StackPanel>
             <StackPanel Grid.Row="0"
                             Grid.Column="4">
-                <TextBlock>Wednesday</TextBlock>
-                <TextBlock x:Name="DayOfMonth3TextBlock"></TextBlock>
+                <Border Style="{StaticResource WeekdayTextBlockBorderStyle}">
+                    <TextBlock Style="{StaticResource WeekdayTextBlockStyle}">Wednesday</TextBlock>
+                </Border>
+                <Border Style="{StaticResource DayOfMonthTextBlockBorderStyle}">
+                    <TextBlock x:Name="DayOfMonth3TextBlock" Style="{StaticResource DayOfMonthTextBlockStyle}"></TextBlock>
+                </Border>
             </StackPanel>
             <StackPanel Grid.Row="0"
                             Grid.Column="5">
-                <TextBlock>Thursday</TextBlock>
-                <TextBlock x:Name="DayOfMonth4TextBlock"></TextBlock>
+                <Border Style="{StaticResource WeekdayTextBlockBorderStyle}">
+                    <TextBlock Style="{StaticResource WeekdayTextBlockStyle}">Thursday</TextBlock>
+                </Border>
+                <Border Style="{StaticResource DayOfMonthTextBlockBorderStyle}">
+                    <TextBlock x:Name="DayOfMonth4TextBlock" Style="{StaticResource DayOfMonthTextBlockStyle}"></TextBlock>
+                </Border>
             </StackPanel>
             <StackPanel Grid.Row="0"
                             Grid.Column="6">
-                <TextBlock>Friday</TextBlock>
-                <TextBlock x:Name="DayOfMonth5TextBlock"></TextBlock>
+                <Border Style="{StaticResource WeekdayTextBlockBorderStyle}">
+                    <TextBlock Style="{StaticResource WeekdayTextBlockStyle}">Friday</TextBlock>
+                </Border>
+                <Border Style="{StaticResource DayOfMonthTextBlockBorderStyle}">
+                    <TextBlock x:Name="DayOfMonth5TextBlock" Style="{StaticResource DayOfMonthTextBlockStyle}"></TextBlock>
+                </Border>
             </StackPanel>
             <StackPanel Grid.Row="0"
                             Grid.Column="7">
-                <TextBlock>Saturday</TextBlock>
-                <TextBlock x:Name="DayOfMonth6TextBlock"></TextBlock>
+                <Border Style="{StaticResource WeekdayTextBlockBorderStyle}">
+                    <TextBlock Style="{StaticResource WeekdayTextBlockStyle}">Saturday</TextBlock>
+                </Border>
+                <Border Style="{StaticResource DayOfMonthTextBlockBorderStyle}">
+                    <TextBlock x:Name="DayOfMonth6TextBlock" Style="{StaticResource DayOfMonthTextBlockStyle}"></TextBlock>
+                </Border>
             </StackPanel>
         </Grid>
 
@@ -133,30 +184,30 @@
                 <StackPanel Grid.Row="1"
                             Grid.Column="0">
                     <!-- The height of each time block is bound to the AgendaTimeUnitHeight property. -->
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">12 am</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">1 am</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">2 am</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">3 am</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">4 am</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">5 am</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">6 am</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">7 am</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">8 am</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">9 am</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">10 am</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">11 am</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">12 pm</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">1 pm</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">2 pm</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">3 pm</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">4 pm</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">5 pm</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">6 pm</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">7 pm</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">8 pm</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">9 pm</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">10 pm</TextBlock>
-                    <TextBlock Height="{x:Bind AgendaTimeUnitHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AgendaTimeTextBlockStyle}">11 pm</TextBlock>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">12 am</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">1 am</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">2 am</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">3 am</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">4 am</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">5 am</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">6 am</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">7 am</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">8 am</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">9 am</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">10 am</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">11 am</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">12 pm</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">1 pm</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">2 pm</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">3 pm</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">4 pm</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">5 pm</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">6 pm</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">7 pm</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">8 pm</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">9 pm</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">10 pm</TextBlock></Border>
+                    <Border Style="{StaticResource AgendaTimeTextBlockBorderStyle}"><TextBlock Style="{StaticResource AgendaTimeTextBlockStyle}">11 pm</TextBlock></Border>
                 </StackPanel>
 
                 <!-- Day agenda views -->

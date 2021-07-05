@@ -14,6 +14,7 @@
             <Setter Property="Height" Value="{x:Bind AgendaTimeUnitHeight, Mode=OneWay}"></Setter>
             <Setter Property="BorderBrush" Value="SlateGray"></Setter>
             <Setter Property="BorderThickness" Value="1,1,0,0"></Setter>
+            <Setter Property="Background" Value="#141414"></Setter>
         </Style>
     </UserControl.Resources>
 
