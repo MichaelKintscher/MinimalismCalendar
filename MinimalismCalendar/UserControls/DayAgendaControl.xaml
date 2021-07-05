@@ -9,9 +9,97 @@
     d:DesignHeight="300"
     d:DesignWidth="400">
 
+    <UserControl.Resources>
+        <Style x:Key="TimeUnitBlockBorderStyle" TargetType="Border">
+            <Setter Property="Height" Value="{x:Bind AgendaTimeUnitHeight, Mode=OneWay}"></Setter>
+            <Setter Property="BorderBrush" Value="SlateGray"></Setter>
+            <Setter Property="BorderThickness" Value="1,1,0,0"></Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
-        <Canvas x:Name="AgendaCanvas">
-            
-        </Canvas>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="1" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="2" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="3" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="4" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="5" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="6" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="7" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="8" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="9" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="10" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="11" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="12" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="13" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="14" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="15" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="16" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="17" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="18" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="19" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="20" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="21" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="22" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+        <Border Grid.Row="23" Style="{StaticResource TimeUnitBlockBorderStyle}"></Border>
+
+        <Grid x:Name="AgendaCanvas"
+                Grid.Row="0"
+                Grid.RowSpan="24"
+              Padding="0,0,10,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+        </Grid>
     </Grid>
 </UserControl>

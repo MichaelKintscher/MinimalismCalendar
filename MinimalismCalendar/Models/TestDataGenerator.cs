@@ -22,20 +22,20 @@ namespace MinimalismCalendar.Models
                 new CalendarEvent()
                 {
                     Name = "First Event",
-                    Start = new DateTime(2021,6,6,10,0,0),
-                    End = new DateTime(2021,6,6,12,0,0)
+                    Start = new DateTime(2021,7,4,10,0,0),
+                    End = new DateTime(2021,7,4,12,0,0)
                 },
                 new CalendarEvent()
                 {
                     Name = "Second Event",
-                    Start = new DateTime(2021,6,8,13,30,0),
-                    End = new DateTime(2021,6,8,14,0,0)
+                    Start = new DateTime(2021,7,6,13,30,0),
+                    End = new DateTime(2021,7,6,14,0,0)
                 },
                 new CalendarEvent()
                 {
                     Name = "Third Event",
-                    Start = new DateTime(2021,6,11,18,0,0),
-                    End = new DateTime(2021,6,11,22,0,0)
+                    Start = new DateTime(2021,7,9,18,0,0),
+                    End = new DateTime(2021,7,9,22,0,0)
                 }
             };
         }

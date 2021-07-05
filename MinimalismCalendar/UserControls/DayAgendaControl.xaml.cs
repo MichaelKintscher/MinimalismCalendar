@@ -97,6 +97,23 @@ namespace MinimalismCalendar.UserControls
         }
         #endregion
 
+        #region Methods
+        /// <summary>
+        /// Clears the events from the control.
+        /// </summary>
+        public void Clear()
+        {
+            // Remove all of the event blocks from the canvas.
+            this.eventBlocks.ForEach(b => this.AgendaCanvas.Children.Remove(b));
+
+            // Now clear the event block references.
+            this.eventBlocks.Clear();
+
+            // Finally, clear the calendar events list.
+            this.CalendarEvents.Clear();
+        }
+        #endregion
+
         #region Helper Methods
         /// <summary>
         /// Adds the given list of events to the agenda view. ONLY CALL THIS AFTER THE LOADED EVENT HAS FIRED.
@@ -119,20 +136,26 @@ namespace MinimalismCalendar.UserControls
             // Create the UI for the event.
             TextBlock eventTextBlock = new TextBlock()
             {
-                Text = calEvent.Name
+                Text = calEvent.Name,
+                Margin = new Thickness(10, 5, 0, 0)
             };
 
             // Wrap the UI in a border for color.
             Border border = new Border();
             border.Child = eventTextBlock;
-            border.Background = new SolidColorBrush(Colors.Pink);
+            border.Background = new SolidColorBrush(Colors.DarkGray);
 
             // Calculate the height of the event UI.
             border.Height = this.AgendaTimeUnitHeight * (calEvent.End - calEvent.Start).TotalHours;
 
             // Calculate the start position of the UI.
-            double verticalOffset = this.AgendaTimeUnitHeight * calEvent.Start.TimeOfDay.TotalHours;
-            Canvas.SetTop(border, verticalOffset);
+            //double verticalOffset = this.AgendaTimeUnitHeight * calEvent.Start.TimeOfDay.TotalHours;
+            //Canvas.SetTop(border, verticalOffset);
+
+            int row = (int)Math.Floor(calEvent.Start.TimeOfDay.TotalHours);
+            double verticalOffset = this.AgendaTimeUnitHeight * (calEvent.Start.TimeOfDay.TotalHours - row);
+            Grid.SetRow(border, row);
+            border.Margin = new Thickness(0, verticalOffset, 0, 0);
 
             // Add the UI to the canvas.
             this.AgendaCanvas.Children.Add(border);
@@ -140,17 +163,7 @@ namespace MinimalismCalendar.UserControls
             this.eventBlocks.Add(border);
 
             // Use this line to observe unecessary repetitions of this event call.
-            System.Diagnostics.Debug.WriteLine("AddEvent executed from " + this.Name +" control for event name: " + calEvent.Name);
-        }
-
-        /// <summary>
-        /// Clears the events from the control.
-        /// </summary>
-        public void Clear()
-        {
-            this.eventBlocks.Clear();
-            this.AgendaCanvas.Children.Clear();
-            this.CalendarEvents.Clear();
+            System.Diagnostics.Debug.WriteLine("AddEvent executed from " + this.Name +" control for event name: " + calEvent.Name + " at ROW " + row + " with vertical offset " + verticalOffset);
         }
         #endregion
     }
