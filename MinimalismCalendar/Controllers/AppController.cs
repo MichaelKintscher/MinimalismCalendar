@@ -220,6 +220,15 @@ namespace MinimalismCalendar.Controllers
             // Navigate to the home page.
             //this.NavState.GotoHome();
         }
+
+        /// <summary>
+        /// Saves the state of the application.
+        /// </summary>
+        public async Task SaveAppStateAsync()
+        {
+            // Save the connection state for the Google Calendar API Connection.
+            await GoogleCalendarAPI.Instance.SaveConnectionDataAsync();
+        }
         #endregion
 
         #region Helper Methods

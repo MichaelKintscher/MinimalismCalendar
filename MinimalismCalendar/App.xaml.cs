@@ -98,7 +98,10 @@ namespace MinimalismCalendar
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
             var deferral = e.SuspendingOperation.GetDeferral();
-            //TODO: Save application state and stop any background activity
+
+            // Save application state and stop any background activity
+            Controllers.AppController.Instance.SaveAppStateAsync();
+
             deferral.Complete();
         }
 

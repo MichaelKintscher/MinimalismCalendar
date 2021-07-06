@@ -1,5 +1,6 @@
 ﻿using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Flows;
+using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
@@ -31,9 +32,9 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// </summary>
         private static readonly string credentialsFilePath = "Assets/Config/credentials.json";
         /// <summary>
-        /// The file path the authenticated token for API access is stored in.
+        /// The file name of the file stonring the Google Calendar API OAuth token.
         /// </summary>
-        private static readonly string authTokenFilePath = ApplicationData.Current.LocalFolder.Path + "\\token.json";
+        private static readonly string tokenFileName = "token.json";
         /// <summary>
         /// The scopes within the API the app is accessing.
         /// </summary>
@@ -63,6 +64,11 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// </summary>
         private UserCredential credential = null;
 
+        /// <summary>
+        /// A cache of the token data for the Google Calendar API.
+        /// </summary>
+        private TokenResponse tokenData { get; set; }
+
         private HttpClient WebClient { get; set; }
 
         /// <summary>
@@ -70,8 +76,8 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// </summary>
         public bool IsAuthorized
         {
-            // The credential property contains a value if the app has previously been authorized.
-            get => this.credential != null;
+            // The token data property contains a value if the app has previously been authorized.
+            get => this.tokenData != null;
         }
         #endregion
 
@@ -79,6 +85,8 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         public GoogleCalendarAPI()
         {
             this.WebClient = new HttpClient();
+
+            this.InitializedTokenDataAsync();
         }
         #endregion
 
@@ -152,11 +160,30 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                     // Set the token as part of the authorization header for the web client used to make API calls.
                     //JsonObject responseJson = JsonObject.Parse(responseContent);
                     //string token = responseJson["access_token"].GetString();
-                    //this.WebClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                    //this.WebClient.DefaultRequestHeaders.Authorization = new Windows.Web.Http.Headers.HttpCredentialsHeaderValue("Bearer", token);
                     //System.Diagnostics.Debug.WriteLine("Token obtained: " + token);
 
-                    this.credential = this.ConvertToCredential(responseContent);
+                    //this.credential = this.ConvertToCredential(responseContent);
+
+                    this.tokenData = this.ConvertToTokenResponse(responseContent);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Saves the authorization data for the current connection to the Google Calendar API to a token file
+        ///     at the authTokenFilePath location.
+        /// </summary>
+        public async Task SaveConnectionDataAsync()
+        {
+            // Save the token data, if there is any.
+            if (this.tokenData != null)
+            {
+                string tokenJsonString = this.ConvertToJsonString(this.tokenData);
+
+                StorageFile tokenFile = await ApplicationData.Current.LocalFolder.CreateFileAsync(GoogleCalendarAPI.tokenFileName, CreationCollisionOption.ReplaceExisting);
+                await FileIO.WriteTextAsync(tokenFile, tokenJsonString);
+                //File.WriteAllLines(GoogleCalendarAPI.authTokenFilePath, new string[] { tokenJsonString });
             }
         }
 
@@ -196,6 +223,64 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         #endregion
 
         #region Helper Methods
+        /// <summary>
+        /// Initializes the token data from the saved token data if it can, otherwise sets
+        /// the token data to null.
+        /// </summary>
+        private async Task InitializedTokenDataAsync()
+        {
+            // Try to load the token data.
+            bool loaded = await this.TryLoadTokenDataAsync();
+            if (loaded == false)
+            {
+                // The load was unsuccessful, so initialize the value to false.
+                this.tokenData = null;
+            }
+        }
+
+        /// <summary>
+        /// Trys to load the OAuth token data from the token file.
+        /// </summary>
+        /// <returns>Whether the token data was successfully loaded.</returns>
+        private async Task<bool> TryLoadTokenDataAsync()
+        {
+            // Read the text from the file.
+            string lines = "";
+            try
+            {
+                //lines = File.ReadAllText(GoogleCalendarAPI.authTokenFilePath);
+                StorageFile tokenFile = await ApplicationData.Current.LocalFolder.GetFileAsync(GoogleCalendarAPI.tokenFileName);
+                lines = await FileIO.ReadTextAsync(tokenFile);
+            }
+            catch (Exception ex)
+            {
+                // An IO exception occured, so return false.
+                System.Diagnostics.Debug.WriteLine("Error accessing: " + ApplicationData.Current.LocalFolder.Path);
+                return false;
+            }
+
+            // Return false if the read data is empty or whitespace.
+            if (String.IsNullOrWhiteSpace(lines))
+            {
+                return false;
+            }
+
+            // Try to convert the token response to token data.
+            try
+            {
+                // NOTE: An exception is thrown if the JSON contained in the string
+                //      is ill-formed.
+                this.tokenData = this.ConvertToTokenResponse(lines);
+            }
+            catch(Exception ex)
+            {
+                return false;
+            }
+
+            // The data was successfully loaded if this point is reached.
+            return true;
+        }
+        
         private Uri GetOauthEndpoint()
         {
             // Build the scopes string as a space deliminated list, per the requirement
@@ -245,6 +330,61 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                             IdToken = "",
                             IssuedUtc = DateTime.UtcNow
                         });
+        }
+
+        /// <summary>
+        /// Converts the token response from the Google Calendar API V3 to its corresponding TokenResponse object.
+        /// </summary>
+        /// <param name="responseContent">The string of the Json object to convert into a token response object.</param>
+        /// <returns>The token response object containing the data in the given content string.</returns>
+        private TokenResponse ConvertToTokenResponse(string responseContent)
+        {
+            JsonObject responseJson = JsonObject.Parse(responseContent);
+            string token = responseJson["access_token"].GetString();
+            long expiresInSeconds = (long)responseJson["expires_in"].GetNumber();
+            string tokenType = responseJson["token_type"].GetString();
+            string scope = responseJson["scope"].GetString();
+            string refreshToken = responseJson["refresh_token"].GetString();
+
+            // If the response content contains an issued time, use that. Otherwise, default to Utc now.
+            //      This value does not exist from the actual response JSON from Google's API, so this
+            //      is a new API response if the value does not exist, and thus the issued time should be
+            //      set to now. Otherwise, the respose JSON is a saved copy, and the saved value should
+            //      be used.
+            DateTime issuedTime = (responseJson.ContainsKey("issued_time")) ? DateTime.Parse(responseJson["issued_time"].GetString()) : DateTime.UtcNow;
+
+            return new TokenResponse()
+            {
+                AccessToken = token,
+                TokenType = tokenType,
+                ExpiresInSeconds = expiresInSeconds,
+                RefreshToken = refreshToken,
+                Scope = scope,
+                IdToken = "",
+                IssuedUtc = issuedTime
+            };
+        }
+
+        /// <summary>
+        /// Converts the token response object into a string containing a serialized Json representation of that object.
+        /// </summary>
+        /// <param name="tokenResponse">The response to serialize into a string.</param>
+        /// <returns>The string containing a serialized Json representation of the given Token Response object.</returns>
+        private string ConvertToJsonString(TokenResponse tokenResponse)
+        {
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.Add("access_token", JsonValue.CreateStringValue(tokenResponse.AccessToken));
+
+            // Set the expiration time (lifespan of the token) to zero seconds if no value exists.
+            double expirationTime = tokenResponse.ExpiresInSeconds.HasValue ? (double)tokenResponse.ExpiresInSeconds.Value : 0.0;
+            jsonObject.Add("expires_in", JsonValue.CreateNumberValue(expirationTime));
+
+            jsonObject.Add("token_type", JsonValue.CreateStringValue(tokenResponse.TokenType));
+            jsonObject.Add("scope", JsonValue.CreateStringValue(tokenResponse.Scope));
+            jsonObject.Add("refresh_token", JsonValue.CreateStringValue(tokenResponse.RefreshToken));
+            jsonObject.Add("issued_time", JsonValue.CreateStringValue(tokenResponse.IssuedUtc.ToString()));
+
+            return jsonObject.Stringify();
         }
 
         /// <summary>
