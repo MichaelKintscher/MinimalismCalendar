@@ -67,6 +67,11 @@ namespace MinimalismCalendar.Controllers
             });
         }
 
+        public void HomePage_GoogleApi_Initialized(object sender, ApiInitializedEventArgs e)
+        {
+            this.InitializeHomePageCalendarControlAsync();
+        }
+
         /// <summary>
         /// Handles a navigation request between app pages.
         /// </summary>
@@ -244,14 +249,19 @@ namespace MinimalismCalendar.Controllers
         /// Initializes the given instance of the home page.
         /// </summary>
         /// <param name="homePage">The instance of the home page to initialize.</param>
-        private void InitializeHomePage(HomePage homePage)
+        private async Task InitializeHomePage(HomePage homePage)
         {
             // Subscribe to the new page's events.
             //    - None at the moment.
 
             // Initialize the calendar control.
-            List<CalendarEvent> eventList = TestDataGenerator.GetTestEvents();
-            homePage.InitializeCalendarControl(DateTime.Now, eventList);
+            //List<CalendarEvent> eventList = TestDataGenerator.GetTestEvents();
+            if (GoogleCalendarAPI.Instance.IsAuthorized)
+            {
+                List<CalendarEvent> eventList = await GoogleCalendarAPI.Instance.GetCalendarEventsAsync();
+                homePage.InitializeCalendarControl(DateTime.Now, eventList);
+            }
+            System.Diagnostics.Debug.WriteLine("Home page calendar initialized!");
         }
 
         /// <summary>
@@ -267,6 +277,12 @@ namespace MinimalismCalendar.Controllers
 
             // Update the Google API status.
             settingsPage.GoogleAuthStatus = GoogleCalendarAPI.Instance.IsAuthorized ? "Good to go!" : "Please reconnect.";
+        }
+
+        private async Task InitializeHomePageCalendarControlAsync()
+        {
+            List<CalendarEvent> eventList = await GoogleCalendarAPI.Instance.GetCalendarEventsAsync();
+            //homePage.InitializeCalendarControl(DateTime.Now, eventList);
         }
 
         /// <summary>

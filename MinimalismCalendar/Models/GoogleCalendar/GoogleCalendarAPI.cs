@@ -6,6 +6,7 @@ using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using MinimalismCalendar.Controllers;
+using MinimalismCalendar.EventArguments;
 using MinimalismCalendar.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -85,6 +86,21 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                     DateTime.Compare(DateTime.UtcNow, this.tokenData.IssuedUtc.AddSeconds(this.tokenData.ExpiresInSeconds.Value)) >= 0);
         }
 
+        private bool isInitialized;
+        /// <summary>
+        /// Returns whether the API is initialized.
+        /// </summary>
+        public bool IsInitialized
+        {
+            get => this.isInitialized;
+            set
+            {
+                this.isInitialized = value;
+                this.RaiseInitialized("Google Calendar");
+                System.Diagnostics.Debug.WriteLine("API Initialized!");
+            }
+        }
+
         /// <summary>
         /// Returns whether the user has authorized the app with the API.
         /// </summary>
@@ -95,9 +111,24 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         }
         #endregion
 
+        #region Events
+        public delegate void InitializedHandler(object sender, ApiInitializedEventArgs e);
+        /// <summary>
+        /// Raised when the API is initialized.
+        /// </summary>
+        public event InitializedHandler Initialized;
+        private void RaiseInitialized(string apiName)
+        {
+            // Create the args and call the listening event handlers, if there are any.
+            ApiInitializedEventArgs args = new ApiInitializedEventArgs(apiName);
+            this.Initialized?.Invoke(this, args);
+        }
+        #endregion
+
         #region Constructors
         public GoogleCalendarAPI()
         {
+            this.IsInitialized = false;
             this.WebClient = new HttpClient();
 
             this.InitializedTokenDataAsync();
@@ -197,7 +228,6 @@ namespace MinimalismCalendar.Models.GoogleCalendar
 
                 StorageFile tokenFile = await ApplicationData.Current.LocalFolder.CreateFileAsync(GoogleCalendarAPI.tokenFileName, CreationCollisionOption.ReplaceExisting);
                 await FileIO.WriteTextAsync(tokenFile, tokenJsonString);
-                //File.WriteAllLines(GoogleCalendarAPI.authTokenFilePath, new string[] { tokenJsonString });
             }
         }
         #endregion
@@ -301,6 +331,8 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                 // Refresh the token if needed.
                 await this.RefreshTokenIfNeededAsync();
             }
+
+            this.IsInitialized = true;
         }
 
         /// <summary>
@@ -309,6 +341,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// <returns>Whether the token data was successfully loaded.</returns>
         private async Task<bool> TryLoadTokenDataAsync()
         {
+            System.Diagnostics.Debug.WriteLine("Trying to load API token file...");
             // Read the text from the file.
             string lines = "";
             try
@@ -327,6 +360,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             // Return false if the read data is empty or whitespace.
             if (String.IsNullOrWhiteSpace(lines))
             {
+                System.Diagnostics.Debug.WriteLine("API token file was empty!");
                 return false;
             }
 
@@ -352,9 +386,11 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// <returns>Whether the token was refreshed.</returns>
         private async Task<bool> RefreshTokenIfNeededAsync()
         {
+            System.Diagnostics.Debug.WriteLine("Checking if token expired...");
             // Refresh the token if needed.
             if (this.TokenExpired)
             {
+                System.Diagnostics.Debug.WriteLine("Token expired!");
                 await this.RefreshTokenAsync();
                 return true;
             }
@@ -410,6 +446,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                     this.tokenData.ExpiresInSeconds = expiresInSeconds;
                 }
             }
+            System.Diagnostics.Debug.WriteLine("Done refreshing token!");
         }
         
         private Uri GetOauthEndpoint()
@@ -528,12 +565,16 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         {
             // Parse the list of events from the response content.
             JsonObject responseJson = JsonObject.Parse(responseContent);
+            IJsonValue v = responseJson["items"];
             JsonArray itemsArray = responseJson["items"].GetArray();
 
             // Create an empty list of events, and parse and add each event.
             List<CalendarEvent> events = new List<CalendarEvent>();
-            foreach (JsonObject eventJson in itemsArray)
+            foreach (var eventJsonValue in itemsArray)
             {
+                // This is necessary because of the type iterated over in the JsonArray.
+                JsonObject eventJson = eventJsonValue.GetObject();
+
                 // Parse the event's title (summary).
                 string summary = eventJson["summary"].GetString();
 
