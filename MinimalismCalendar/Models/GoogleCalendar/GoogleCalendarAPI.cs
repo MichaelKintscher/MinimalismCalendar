@@ -96,8 +96,13 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             set
             {
                 this.isInitialized = value;
-                this.RaiseInitialized("Google Calendar");
-                System.Diagnostics.Debug.WriteLine("API Initialized!");
+
+                // Only raise the initialized event if this is set to true.
+                if (value)
+                {
+                    this.RaiseInitialized("Google Calendar");
+                    System.Diagnostics.Debug.WriteLine("API Initialized!");
+                }
             }
         }
 
@@ -332,6 +337,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                 await this.RefreshTokenIfNeededAsync();
             }
 
+            // Mark initialization as complete.
             this.IsInitialized = true;
         }
 
@@ -444,6 +450,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                     // Update the access token and expiration.
                     this.tokenData.AccessToken = token;
                     this.tokenData.ExpiresInSeconds = expiresInSeconds;
+                    this.tokenData.IssuedUtc = DateTime.UtcNow;
                 }
             }
             System.Diagnostics.Debug.WriteLine("Done refreshing token!");
@@ -519,7 +526,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             //      is a new API response if the value does not exist, and thus the issued time should be
             //      set to now. Otherwise, the respose JSON is a saved copy, and the saved value should
             //      be used.
-            DateTime issuedTime = (responseJson.ContainsKey("issued_time")) ? DateTime.Parse(responseJson["issued_time"].GetString()) : DateTime.UtcNow;
+            DateTime issuedTime = responseJson.ContainsKey("issued_time") ? DateTime.Parse(responseJson["issued_time"].GetString()) : DateTime.UtcNow;
 
             return new TokenResponse()
             {

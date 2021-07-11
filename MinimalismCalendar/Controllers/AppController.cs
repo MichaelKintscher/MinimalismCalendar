@@ -45,6 +45,9 @@ namespace MinimalismCalendar.Controllers
             // Register for the network status changed event.
             NetworkInformation.NetworkStatusChanged += this.NetworkStatusChanged;
 
+            // Register for the API initialization events.
+            GoogleCalendarAPI.Instance.Initialized += this.GoogleApi_Initialized;
+
             // Initialize the controller with a main page as the root and the start state for the app navigation.
             this.RootPage = new MainPage();
             this.NavState = new StartState(this);
@@ -67,9 +70,18 @@ namespace MinimalismCalendar.Controllers
             });
         }
 
-        public void HomePage_GoogleApi_Initialized(object sender, ApiInitializedEventArgs e)
+        /// <summary>
+        /// Handles when the Google Calendar API is initialized and read to use.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public void GoogleApi_Initialized(object sender, ApiInitializedEventArgs e)
         {
-            this.InitializeHomePageCalendarControlAsync();
+            // If the home page is currently displayed, refresh the calendar.
+            if (this.RootPage.CurrentPage is HomePage homePage)
+            {
+                this.RefreshHomePageCalendarControlAsync(homePage);
+            }
         }
 
         /// <summary>
@@ -258,10 +270,9 @@ namespace MinimalismCalendar.Controllers
             //List<CalendarEvent> eventList = TestDataGenerator.GetTestEvents();
             if (GoogleCalendarAPI.Instance.IsAuthorized)
             {
-                List<CalendarEvent> eventList = await GoogleCalendarAPI.Instance.GetCalendarEventsAsync();
-                homePage.InitializeCalendarControl(DateTime.Now, eventList);
+                await this.RefreshHomePageCalendarControlAsync(homePage);
             }
-            System.Diagnostics.Debug.WriteLine("Home page calendar initialized!");
+            System.Diagnostics.Debug.WriteLine("Home page initialized!");
         }
 
         /// <summary>
@@ -279,10 +290,16 @@ namespace MinimalismCalendar.Controllers
             settingsPage.GoogleAuthStatus = GoogleCalendarAPI.Instance.IsAuthorized ? "Good to go!" : "Please reconnect.";
         }
 
-        private async Task InitializeHomePageCalendarControlAsync()
+        /// <summary>
+        /// Refreshes the home page calendar control.
+        /// </summary>
+        /// <param name="homePage">The home page instance to refresh the calendar control on.</param>
+        /// <returns></returns>
+        private async Task RefreshHomePageCalendarControlAsync(HomePage homePage)
         {
             List<CalendarEvent> eventList = await GoogleCalendarAPI.Instance.GetCalendarEventsAsync();
-            //homePage.InitializeCalendarControl(DateTime.Now, eventList);
+            homePage.InitializeCalendarControl(DateTime.Now, eventList);
+            System.Diagnostics.Debug.WriteLine("Home page calendar initialized!");
         }
 
         /// <summary>

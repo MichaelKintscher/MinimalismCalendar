@@ -60,6 +60,14 @@ namespace MinimalismCalendar
         /// The page in the NavView prior to executing a requested navigation.
         /// </summary>
         private Page CurrentNavViewPage { get; set; }
+
+        /// <summary>
+        /// The currently displayed child page.
+        /// </summary>
+        public Page CurrentPage
+        {
+            get => this.ContentFrame.Content as Page;
+        }
         #endregion
 
         #region Events
