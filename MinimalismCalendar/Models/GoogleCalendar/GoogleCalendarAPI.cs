@@ -8,6 +8,7 @@ using Google.Apis.Util.Store;
 using MinimalismCalendar.Controllers;
 using MinimalismCalendar.EventArguments;
 using MinimalismCalendar.Exceptions;
+using MinimalismCalendar.Models.ApiModels;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,7 +27,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
     /// Wrapper class for interfacing with the Google Calendar API. This class
     /// encapsulates all external dependencies on the Google Calendar v3 API.
     /// </summary>
-    public class GoogleCalendarAPI : SingletonController<GoogleCalendarAPI>
+    public class GoogleCalendarAPI : ApiBase<GoogleCalendarAPI>
     {
         #region Constants
         /// <summary>
@@ -100,7 +101,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                 // Only raise the initialized event if this is set to true.
                 if (value)
                 {
-                    this.RaiseInitialized("Google Calendar");
+                    this.RaiseInitialized(this.Name);
                     System.Diagnostics.Debug.WriteLine("API Initialized!");
                 }
             }
@@ -133,6 +134,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         #region Constructors
         public GoogleCalendarAPI()
         {
+            this.Name = "Google Calendar";
             this.IsInitialized = false;
             this.WebClient = new HttpClient();
 

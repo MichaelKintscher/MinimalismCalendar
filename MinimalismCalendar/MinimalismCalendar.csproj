@@ -137,6 +137,8 @@
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Models\ApiModels\ApiBase.cs" />
+    <Compile Include="Models\ApiModels\Singleton.cs" />
     <Compile Include="Models\CalendarEvent.cs" />
     <Compile Include="Models\GoogleCalendar\GoogleCalendarAPI.cs" />
     <Compile Include="Models\TestDataGenerator.cs" />
