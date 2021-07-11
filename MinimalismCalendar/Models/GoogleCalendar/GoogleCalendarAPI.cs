@@ -72,6 +72,19 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         private HttpClient WebClient { get; set; }
 
         /// <summary>
+        /// Returns whether the token exists and has expired, or exists but is missing an expiration limit.
+        /// </summary>
+        private bool TokenExpired
+        {
+            // There has to be a token data, AND EITHER
+            //      there is no expiration time OR
+            //      there is an expiration time and it has passed.
+            get => this.IsAuthorized &&
+                (this.tokenData.ExpiresInSeconds.HasValue == false ||
+                    DateTime.Compare(DateTime.UtcNow, this.tokenData.IssuedUtc.AddSeconds(this.tokenData.ExpiresInSeconds.Value)) >= 0);
+        }
+
+        /// <summary>
         /// Returns whether the user has authorized the app with the API.
         /// </summary>
         public bool IsAuthorized
@@ -90,7 +103,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         }
         #endregion
 
-        #region Methods
+        #region Methods - OAuth
         public async Task AuthorizeAsync()
         {
             await this.StartOAuthAsync();
@@ -186,6 +199,9 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                 //File.WriteAllLines(GoogleCalendarAPI.authTokenFilePath, new string[] { tokenJsonString });
             }
         }
+        #endregion
+
+        #region Methods
 
         /// <summary>
         /// Gets a list of 10 events from the authorized user's primary calendar.
@@ -236,6 +252,11 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                 // The load was unsuccessful, so initialize the value to false.
                 this.tokenData = null;
             }
+            else
+            {
+                // Refresh the token if needed.
+                await this.RefreshTokenIfNeededAsync();
+            }
         }
 
         /// <summary>
@@ -279,6 +300,72 @@ namespace MinimalismCalendar.Models.GoogleCalendar
 
             // The data was successfully loaded if this point is reached.
             return true;
+        }
+
+        /// <summary>
+        /// Refreshes the token, if the token needs to be refreshed.
+        /// </summary>
+        /// <returns>Whether the token was refreshed.</returns>
+        private async Task<bool> RefreshTokenIfNeededAsync()
+        {
+            // Refresh the token if needed.
+            if (this.TokenExpired)
+            {
+                await this.RefreshTokenAsync();
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Refreshes the access token using the refresh token.
+        /// </summary>
+        /// <returns></returns>
+        private async Task RefreshTokenAsync()
+        {
+            System.Diagnostics.Debug.WriteLine("Refreshing token.");
+
+            // Open the secrets file to read the client ID.
+            using (var stream = new FileStream(GoogleCalendarAPI.credentialsFilePath, FileMode.Open, FileAccess.Read))
+            {
+                // Make a client specifically for exchanging tokens.
+                using (HttpClient tokenClient = new HttpClient())
+                {
+                    // Read the client ID and secret from their file.
+                    ClientSecrets secrets = GoogleClientSecrets.Load(stream).Secrets;
+
+                    HttpFormUrlEncodedContent content = new HttpFormUrlEncodedContent(new List<KeyValuePair<string, string>>()
+                    {
+                        new KeyValuePair<string, string>("client_id", secrets.ClientId),
+                        new KeyValuePair<string, string>("client_secret", secrets.ClientSecret),
+                        new KeyValuePair<string, string>("refresh_token", this.tokenData.RefreshToken),
+                        new KeyValuePair<string, string>("grant_type", "refresh_token")
+                    });
+
+                    // Use http GET to get a response from the token endpoint.
+                    HttpResponseMessage response = new HttpResponseMessage();
+                    try
+                    {
+                        response = await tokenClient.PostAsync(new Uri(GoogleCalendarAPI.oauthTokenEndpoint), content);
+                        response.EnsureSuccessStatusCode();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Error in HTTP response: " + ex.Message);
+                    }
+
+                    // No exceptions were thrown, so parse the response message.
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    JsonObject responseJson = JsonObject.Parse(responseContent);
+                    string token = responseJson["access_token"].GetString();
+                    long expiresInSeconds = (long)responseJson["expires_in"].GetNumber();
+
+                    // Update the access token and expiration.
+                    this.tokenData.AccessToken = token;
+                    this.tokenData.ExpiresInSeconds = expiresInSeconds;
+                }
+            }
         }
         
         private Uri GetOauthEndpoint()
