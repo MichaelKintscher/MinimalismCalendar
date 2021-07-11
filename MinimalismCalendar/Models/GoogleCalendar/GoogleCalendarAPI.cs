@@ -6,6 +6,7 @@ using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using MinimalismCalendar.Controllers;
+using MinimalismCalendar.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -202,12 +203,55 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         #endregion
 
         #region Methods
+        /// <summary>
+        /// Gets a list of events on the authorized user's primary calendar.
+        /// See: https://developers.google.com/calendar/api/v3/reference/events/list
+        /// </summary>
+        /// <returns>A list of calendar events</returns>
+        public async Task<List<CalendarEvent>> GetCalendarEventsAsync()
+        {
+            // Throw an API Not Authorized exception if the api is not authorized.
+            if (this.IsAuthorized == false)
+            {
+                throw new ApiNotAuthorizedException();
+            }
+
+            // Refresh the token if needed.
+            await this.RefreshTokenIfNeededAsync();
+
+            using (HttpClient client = new HttpClient())
+            {
+                // Set the authorization header.
+                client.DefaultRequestHeaders.Authorization =
+                    new Windows.Web.Http.Headers.HttpCredentialsHeaderValue(this.tokenData.TokenType, this.tokenData.AccessToken);
+
+                string uri = "https://www.googleapis.com/calendar/v3/calendars/primary/events";
+
+                // Use http GET to get a response from the calendar endpoint.
+                HttpResponseMessage response = new HttpResponseMessage();
+                try
+                {
+                    response = await client.GetAsync(new Uri(uri));
+                    response.EnsureSuccessStatusCode();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Error in HTTP response: " + ex.Message);
+                }
+
+                // No exceptions were thrown, so parse the response message.
+                string responseContent = await response.Content.ReadAsStringAsync();
+
+                // Convert the response content to a list of events.
+                return this.GetEventsFromResponse(responseContent);
+            }
+        }
 
         /// <summary>
         /// Gets a list of 10 events from the authorized user's primary calendar.
         /// </summary>
         /// <returns>A list of calendar events.</returns>
-        public async Task<List<CalendarEvent>> GetCalendarEventsAsync()
+        public async Task<List<CalendarEvent>> GetCalendarEventsAsyncOld()
         {
             // Authorize if not already done so.
             if (!this.IsAuthorized)
@@ -472,6 +516,45 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             jsonObject.Add("issued_time", JsonValue.CreateStringValue(tokenResponse.IssuedUtc.ToString()));
 
             return jsonObject.Stringify();
+        }
+
+        /// <summary>
+        /// Gets a list of calendar events from the given response content.
+        /// For formatting, see: https://developers.google.com/calendar/api/v3/reference/events/list
+        /// </summary>
+        /// <param name="responseContent">The response content formatted in an Events:list response from the Google Calendar API.</param>
+        /// <returns></returns>
+        private List<CalendarEvent> GetEventsFromResponse(string responseContent)
+        {
+            // Parse the list of events from the response content.
+            JsonObject responseJson = JsonObject.Parse(responseContent);
+            JsonArray itemsArray = responseJson["items"].GetArray();
+
+            // Create an empty list of events, and parse and add each event.
+            List<CalendarEvent> events = new List<CalendarEvent>();
+            foreach (JsonObject eventJson in itemsArray)
+            {
+                // Parse the event's title (summary).
+                string summary = eventJson["summary"].GetString();
+
+                // Parse the event's start date and time.
+                JsonObject startJson = eventJson["start"].GetObject();
+                DateTime start = DateTime.Parse(startJson["dateTime"].GetString());
+
+                // Parse the event's end date and time.
+                JsonObject endJson = eventJson["end"].GetObject();
+                DateTime end = DateTime.Parse(endJson["dateTime"].GetString());
+
+                // Add a new calendar event model to the list.
+                events.Add(new CalendarEvent()
+                {
+                    Name = summary,
+                    Start = start,
+                    End = end
+                });
+            }
+
+            return events;
         }
 
         /// <summary>

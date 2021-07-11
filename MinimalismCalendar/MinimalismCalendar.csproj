@@ -132,6 +132,7 @@
     <Compile Include="EventArguments\NavigationRequestedEventArgs.cs" />
     <Compile Include="EventArguments\OauthCodeAcquiredEventArgs.cs" />
     <Compile Include="EventArguments\RetryOauthRequestedEventArgs.cs" />
+    <Compile Include="Exceptions\ApiNotAuthorizedException.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
