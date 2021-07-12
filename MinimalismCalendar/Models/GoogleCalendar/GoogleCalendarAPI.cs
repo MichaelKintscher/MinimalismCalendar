@@ -27,17 +27,13 @@ namespace MinimalismCalendar.Models.GoogleCalendar
     /// Wrapper class for interfacing with the Google Calendar API. This class
     /// encapsulates all external dependencies on the Google Calendar v3 API.
     /// </summary>
-    public class GoogleCalendarAPI : ApiBase<GoogleCalendarAPI>
+    public class GoogleCalendarAPI : OAuthApi<GoogleCalendarAPI>
     {
         #region Constants
         /// <summary>
         /// The file path the API credentials are stored in.
         /// </summary>
         private static readonly string credentialsFilePath = "Assets/Config/credentials.json";
-        /// <summary>
-        /// The file name of the file stonring the Google Calendar API OAuth token.
-        /// </summary>
-        private static readonly string tokenFileName = "token.json";
         /// <summary>
         /// The scopes within the API the app is accessing.
         /// </summary>
@@ -62,180 +58,16 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         #endregion
 
         #region Properties
-        /// <summary>
-        /// A cache of the authorized user credential for the Google Calendar API.
-        /// </summary>
-        private UserCredential credential = null;
-
-        /// <summary>
-        /// A cache of the token data for the Google Calendar API.
-        /// </summary>
-        private TokenResponse tokenData { get; set; }
-
-        private HttpClient WebClient { get; set; }
-
-        /// <summary>
-        /// Returns whether the token exists and has expired, or exists but is missing an expiration limit.
-        /// </summary>
-        private bool TokenExpired
-        {
-            // There has to be a token data, AND EITHER
-            //      there is no expiration time OR
-            //      there is an expiration time and it has passed.
-            get => this.IsAuthorized &&
-                (this.tokenData.ExpiresInSeconds.HasValue == false ||
-                    DateTime.Compare(DateTime.UtcNow, this.tokenData.IssuedUtc.AddSeconds(this.tokenData.ExpiresInSeconds.Value)) >= 0);
-        }
-
-        private bool isInitialized;
-        /// <summary>
-        /// Returns whether the API is initialized.
-        /// </summary>
-        public bool IsInitialized
-        {
-            get => this.isInitialized;
-            set
-            {
-                this.isInitialized = value;
-
-                // Only raise the initialized event if this is set to true.
-                if (value)
-                {
-                    this.RaiseInitialized(this.Name);
-                    System.Diagnostics.Debug.WriteLine("API Initialized!");
-                }
-            }
-        }
-
-        /// <summary>
-        /// Returns whether the user has authorized the app with the API.
-        /// </summary>
-        public bool IsAuthorized
-        {
-            // The token data property contains a value if the app has previously been authorized.
-            get => this.tokenData != null;
-        }
-        #endregion
-
-        #region Events
-        public delegate void InitializedHandler(object sender, ApiInitializedEventArgs e);
-        /// <summary>
-        /// Raised when the API is initialized.
-        /// </summary>
-        public event InitializedHandler Initialized;
-        private void RaiseInitialized(string apiName)
-        {
-            // Create the args and call the listening event handlers, if there are any.
-            ApiInitializedEventArgs args = new ApiInitializedEventArgs(apiName);
-            this.Initialized?.Invoke(this, args);
-        }
         #endregion
 
         #region Constructors
         public GoogleCalendarAPI()
+            : base(GoogleCalendarAPI.oauthBaseUri, GoogleCalendarAPI.oauthTokenEndpoint, GoogleCalendarAPI.oauthRedirectUri, GoogleCalendarAPI.credentialsFilePath,
+                        GoogleCalendarAPI.LoadApiCredentials, GoogleCalendarAPI.GetOAuthQueryString, GoogleCalendarAPI.GetTokenExchangeParams,
+                        GoogleCalendarAPI.ConvertResponseToToken, GoogleCalendarAPI.GetTokenRefreshParams, GoogleCalendarAPI.ConvertTokenToJsonString)
         {
+            // Initalize API properties.
             this.Name = "Google Calendar";
-            this.IsInitialized = false;
-            this.WebClient = new HttpClient();
-
-            this.InitializedTokenDataAsync();
-        }
-        #endregion
-
-        #region Methods - OAuth
-        public async Task AuthorizeAsync()
-        {
-            await this.StartOAuthAsync();
-        }
-
-        /// <summary>
-        /// Prompts the user to authorize the app with Google's services.
-        /// </summary>
-        public async Task<Uri> StartOAuthAsync()
-        {
-            Uri startUri = this.GetOauthEndpoint();
-
-            await Browser.OpenAsync(startUri);
-            return startUri;
-        }
-
-        /// <summary>
-        /// Completes the OAuth flow by exchanging the given authorization code for a token.
-        /// </summary>
-        /// <param name="authorizationCode">The authorization code to exchange for the token.</param>
-        public async Task GetOauthTokenAsync(string authorizationCode)
-        {
-            System.Diagnostics.Debug.WriteLine("Getting token using code: " + authorizationCode);
-
-            // Open the secrets file to read the client ID.
-            using (var stream = new FileStream(GoogleCalendarAPI.credentialsFilePath, FileMode.Open, FileAccess.Read))
-            {
-                // Make a client specifically for exchanging tokens.
-                using (HttpClient tokenClient = new HttpClient())
-                {
-                    // Read the client ID and secret from their file.
-                    ClientSecrets secrets = GoogleClientSecrets.Load(stream).Secrets;
-
-                    // Add the parameters to the OAuth token exchange endpoint.
-                    string tokenExchangeUri = GoogleCalendarAPI.oauthTokenEndpoint +
-                                                "?client_id=" + secrets.ClientId +
-                                                "&client_secret=" + secrets.ClientSecret +
-                                                "&code=" + authorizationCode +
-                                                "&redirect_uri=" + GoogleCalendarAPI.oauthRedirectUri +
-                                                "&grant_type=" + "authorization_code";
-
-                    HttpFormUrlEncodedContent content = new HttpFormUrlEncodedContent(new List<KeyValuePair<string, string>>()
-                    {
-                        new KeyValuePair<string, string>("client_id", secrets.ClientId),
-                        new KeyValuePair<string, string>("client_secret", secrets.ClientSecret),
-                        new KeyValuePair<string, string>("code", authorizationCode),
-                        new KeyValuePair<string, string>("redirect_uri", GoogleCalendarAPI.oauthRedirectUri),
-                        new KeyValuePair<string, string>("grant_type", "authorization_code")
-                    });
-
-                    // Use http GET to get a response from the token endpoint.
-                    HttpResponseMessage response = new HttpResponseMessage();
-                    try
-                    {
-                        response = await tokenClient.PostAsync(new Uri(GoogleCalendarAPI.oauthTokenEndpoint), content);
-                        response.EnsureSuccessStatusCode();
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine("Error in HTTP response: " + ex.Message);
-                    }
-
-                    // No exceptions were thrown, so parse the response message.
-                    string responseContent = await response.Content.ReadAsStringAsync();
-
-
-                    // Set the token as part of the authorization header for the web client used to make API calls.
-                    //JsonObject responseJson = JsonObject.Parse(responseContent);
-                    //string token = responseJson["access_token"].GetString();
-                    //this.WebClient.DefaultRequestHeaders.Authorization = new Windows.Web.Http.Headers.HttpCredentialsHeaderValue("Bearer", token);
-                    //System.Diagnostics.Debug.WriteLine("Token obtained: " + token);
-
-                    //this.credential = this.ConvertToCredential(responseContent);
-
-                    this.tokenData = this.ConvertToTokenResponse(responseContent);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Saves the authorization data for the current connection to the Google Calendar API to a token file
-        ///     at the authTokenFilePath location.
-        /// </summary>
-        public async Task SaveConnectionDataAsync()
-        {
-            // Save the token data, if there is any.
-            if (this.tokenData != null)
-            {
-                string tokenJsonString = this.ConvertToJsonString(this.tokenData);
-
-                StorageFile tokenFile = await ApplicationData.Current.LocalFolder.CreateFileAsync(GoogleCalendarAPI.tokenFileName, CreationCollisionOption.ReplaceExisting);
-                await FileIO.WriteTextAsync(tokenFile, tokenJsonString);
-            }
         }
         #endregion
 
@@ -247,218 +79,49 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// <returns>A list of calendar events</returns>
         public async Task<List<CalendarEvent>> GetCalendarEventsAsync()
         {
-            // Throw an API Not Authorized exception if the api is not authorized.
-            if (this.IsAuthorized == false)
-            {
-                throw new ApiNotAuthorizedException();
-            }
+            string uri = "https://www.googleapis.com/calendar/v3/calendars/primary/events";
 
-            // Refresh the token if needed.
-            await this.RefreshTokenIfNeededAsync();
+            // No exceptions were thrown, so parse the response message.
+            string responseContent = await this.GetAsync(uri);
 
-            using (HttpClient client = new HttpClient())
-            {
-                // Set the authorization header.
-                client.DefaultRequestHeaders.Authorization =
-                    new Windows.Web.Http.Headers.HttpCredentialsHeaderValue(this.tokenData.TokenType, this.tokenData.AccessToken);
-
-                string uri = "https://www.googleapis.com/calendar/v3/calendars/primary/events";
-
-                // Use http GET to get a response from the calendar endpoint.
-                HttpResponseMessage response = new HttpResponseMessage();
-                try
-                {
-                    response = await client.GetAsync(new Uri(uri));
-                    response.EnsureSuccessStatusCode();
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("Error in HTTP response: " + ex.Message);
-                }
-
-                // No exceptions were thrown, so parse the response message.
-                string responseContent = await response.Content.ReadAsStringAsync();
-
-                // Convert the response content to a list of events.
-                return this.GetEventsFromResponse(responseContent);
-            }
-        }
-
-        /// <summary>
-        /// Gets a list of 10 events from the authorized user's primary calendar.
-        /// </summary>
-        /// <returns>A list of calendar events.</returns>
-        public async Task<List<CalendarEvent>> GetCalendarEventsAsyncOld()
-        {
-            // Authorize if not already done so.
-            if (!this.IsAuthorized)
-            {
-                await this.AuthorizeAsync();
-            }
-
-            // Create the Google Calendar API service.
-            CalendarService service = new CalendarService(new BaseClientService.Initializer()
-            {
-                HttpClientInitializer = credential,
-                ApplicationName = applicationName
-            });
-
-            // Define the parameters of the request.
-            EventsResource.ListRequest request = service.Events.List("primary");
-            request.TimeMin = DateTime.Now;
-            request.ShowDeleted = false;
-            request.SingleEvents = true;
-            request.MaxResults = 10;
-            request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
-
-            // Execute the request to actually get the events from the API.
-            Events events = request.Execute();
-
-            // Return the list of events, converted to the local app's calendar event model.
-            return GoogleCalendarAPI.ConvertCalendarEventsToLocal(events);
+            // Convert the response content to a list of events.
+            return this.GetEventsFromResponse(responseContent);
         }
         #endregion
 
         #region Helper Methods
         /// <summary>
-        /// Initializes the token data from the saved token data if it can, otherwise sets
-        /// the token data to null.
+        /// Loads the client app's credentials for the Google API from the file they are stored in.
         /// </summary>
-        private async Task InitializedTokenDataAsync()
+        /// <returns>The client app's credentials for the Google API.</returns>
+        private static ApiCredential LoadApiCredentials()
         {
-            // Try to load the token data.
-            bool loaded = await this.TryLoadTokenDataAsync();
-            if (loaded == false)
-            {
-                // The load was unsuccessful, so initialize the value to false.
-                this.tokenData = null;
-            }
-            else
-            {
-                // Refresh the token if needed.
-                await this.RefreshTokenIfNeededAsync();
-            }
-
-            // Mark initialization as complete.
-            this.IsInitialized = true;
-        }
-
-        /// <summary>
-        /// Trys to load the OAuth token data from the token file.
-        /// </summary>
-        /// <returns>Whether the token data was successfully loaded.</returns>
-        private async Task<bool> TryLoadTokenDataAsync()
-        {
-            System.Diagnostics.Debug.WriteLine("Trying to load API token file...");
-            // Read the text from the file.
-            string lines = "";
-            try
-            {
-                //lines = File.ReadAllText(GoogleCalendarAPI.authTokenFilePath);
-                StorageFile tokenFile = await ApplicationData.Current.LocalFolder.GetFileAsync(GoogleCalendarAPI.tokenFileName);
-                lines = await FileIO.ReadTextAsync(tokenFile);
-            }
-            catch (Exception ex)
-            {
-                // An IO exception occured, so return false.
-                System.Diagnostics.Debug.WriteLine("Error accessing: " + ApplicationData.Current.LocalFolder.Path);
-                return false;
-            }
-
-            // Return false if the read data is empty or whitespace.
-            if (String.IsNullOrWhiteSpace(lines))
-            {
-                System.Diagnostics.Debug.WriteLine("API token file was empty!");
-                return false;
-            }
-
-            // Try to convert the token response to token data.
-            try
-            {
-                // NOTE: An exception is thrown if the JSON contained in the string
-                //      is ill-formed.
-                this.tokenData = this.ConvertToTokenResponse(lines);
-            }
-            catch(Exception ex)
-            {
-                return false;
-            }
-
-            // The data was successfully loaded if this point is reached.
-            return true;
-        }
-
-        /// <summary>
-        /// Refreshes the token, if the token needs to be refreshed.
-        /// </summary>
-        /// <returns>Whether the token was refreshed.</returns>
-        private async Task<bool> RefreshTokenIfNeededAsync()
-        {
-            System.Diagnostics.Debug.WriteLine("Checking if token expired...");
-            // Refresh the token if needed.
-            if (this.TokenExpired)
-            {
-                System.Diagnostics.Debug.WriteLine("Token expired!");
-                await this.RefreshTokenAsync();
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Refreshes the access token using the refresh token.
-        /// </summary>
-        /// <returns></returns>
-        private async Task RefreshTokenAsync()
-        {
-            System.Diagnostics.Debug.WriteLine("Refreshing token.");
-
-            // Open the secrets file to read the client ID.
             using (var stream = new FileStream(GoogleCalendarAPI.credentialsFilePath, FileMode.Open, FileAccess.Read))
             {
-                // Make a client specifically for exchanging tokens.
-                using (HttpClient tokenClient = new HttpClient())
+                using (StreamReader reader = new StreamReader(stream))
                 {
-                    // Read the client ID and secret from their file.
-                    ClientSecrets secrets = GoogleClientSecrets.Load(stream).Secrets;
+                    string credentials = reader.ReadToEnd();
 
-                    HttpFormUrlEncodedContent content = new HttpFormUrlEncodedContent(new List<KeyValuePair<string, string>>()
+                    JsonObject credentialsJson = JsonObject.Parse(credentials);
+                    credentialsJson = credentialsJson["installed"].GetObject();
+                    string clientId = credentialsJson["client_id"].GetString();
+                    string clientSecret = credentialsJson["client_secret"].GetString();
+
+                    return new ApiCredential()
                     {
-                        new KeyValuePair<string, string>("client_id", secrets.ClientId),
-                        new KeyValuePair<string, string>("client_secret", secrets.ClientSecret),
-                        new KeyValuePair<string, string>("refresh_token", this.tokenData.RefreshToken),
-                        new KeyValuePair<string, string>("grant_type", "refresh_token")
-                    });
-
-                    // Use http GET to get a response from the token endpoint.
-                    HttpResponseMessage response = new HttpResponseMessage();
-                    try
-                    {
-                        response = await tokenClient.PostAsync(new Uri(GoogleCalendarAPI.oauthTokenEndpoint), content);
-                        response.EnsureSuccessStatusCode();
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine("Error in HTTP response: " + ex.Message);
-                    }
-
-                    // No exceptions were thrown, so parse the response message.
-                    string responseContent = await response.Content.ReadAsStringAsync();
-                    JsonObject responseJson = JsonObject.Parse(responseContent);
-                    string token = responseJson["access_token"].GetString();
-                    long expiresInSeconds = (long)responseJson["expires_in"].GetNumber();
-
-                    // Update the access token and expiration.
-                    this.tokenData.AccessToken = token;
-                    this.tokenData.ExpiresInSeconds = expiresInSeconds;
-                    this.tokenData.IssuedUtc = DateTime.UtcNow;
+                        ClientId = clientId,
+                        ClientSecret = clientSecret
+                    };
                 }
             }
-            System.Diagnostics.Debug.WriteLine("Done refreshing token!");
         }
         
-        private Uri GetOauthEndpoint()
+        /// <summary>
+        /// Gets the query string for a request to the Google OAuth endpoint.
+        /// </summary>
+        /// <param name="credentials">The client app's credentials for the Google API.</param>
+        /// <returns>The query string for a request to the Google OAuth endpoint. DOES NOT include the base url for the endpoint.</returns>
+        private static string GetOAuthQueryString(ApiCredential credentials)
         {
             // Build the scopes string as a space deliminated list, per the requirement
             //      specified here: https://developers.google.com/identity/protocols/oauth2/native-app#uwp
@@ -469,59 +132,49 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                 scopesString.Append(" ");
             }
 
-            // Open the secrets file to read the client ID.
-            using (var stream = new FileStream(GoogleCalendarAPI.credentialsFilePath, FileMode.Open, FileAccess.Read))
-            {
-                ClientSecrets secrets = GoogleClientSecrets.Load(stream).Secrets;
-
-                // Create the start URI
-                string startUrl = GoogleCalendarAPI.oauthBaseUri +
-                                    "?client_id=" + secrets.ClientId +
-                                    "&redirect_uri=" + GoogleCalendarAPI.oauthRedirectUri +
-                                    "&response_type=code" +
-                                    "&scope=" + scopesString.ToString();
-                return new Uri(startUrl);
-            }
-        }
-
-        private UserCredential ConvertToCredential(string responseContent)
-        {
-            JsonObject responseJson = JsonObject.Parse(responseContent);
-            string token = responseJson["access_token"].GetString();
-            long expiresInSeconds = (long)responseJson["expires_in"].GetNumber();
-            string tokenType = responseJson["token_type"].GetString();
-            string scope = responseJson["scope"].GetString();
-            string refreshToken = responseJson["refresh_token"].GetString();
-
-            AuthorizationCodeFlow flow = new AuthorizationCodeFlow(new AuthorizationCodeFlow.Initializer(GoogleCalendarAPI.oauthBaseUri, GoogleCalendarAPI.oauthTokenEndpoint));
-            return new UserCredential(
-                        flow,
-                        "",
-                        new Google.Apis.Auth.OAuth2.Responses.TokenResponse()
-                        {
-                            AccessToken = token,
-                            TokenType = tokenType,
-                            ExpiresInSeconds = expiresInSeconds,
-                            RefreshToken = refreshToken,
-                            Scope = scope,
-                            IdToken = "",
-                            IssuedUtc = DateTime.UtcNow
-                        });
+            // Create the start URI
+            string startUrl = "?client_id=" + credentials.ClientId +
+                              "&redirect_uri=" + GoogleCalendarAPI.oauthRedirectUri +
+                              "&response_type=code" +
+                              "&scope=" + scopesString.ToString();
+            return startUrl;
         }
 
         /// <summary>
-        /// Converts the token response from the Google Calendar API V3 to its corresponding TokenResponse object.
+        /// Gets the parameters for Google's OAuth 2.0 token exchange point.
+        /// </summary>
+        /// <param name="authorizationCode">The authorization code returned by the OAuth endpoint.</param>
+        /// <param name="redirectUri">The redirect URI for the OAuth flow.</param>
+        /// <param name="credentials">The client app's credentials for the Google API.</param>
+        /// <returns>An IList of key value pairs representing the HTTP POST parameters.</returns>
+        private static IList<KeyValuePair<string, string>> GetTokenExchangeParams(string authorizationCode, string redirectUri, ApiCredential credentials)
+        {
+            // Parameter names are documented at: https://developers.google.com/identity/protocols/oauth2/native-app#step-2:-send-a-request-to-googles-oauth-2.0-server
+            return new List<KeyValuePair<string, string>>()
+            {
+                new KeyValuePair<string, string>("client_id", credentials.ClientId),
+                new KeyValuePair<string, string>("client_secret", credentials.ClientSecret),
+                new KeyValuePair<string, string>("code", authorizationCode),
+                new KeyValuePair<string, string>("redirect_uri", redirectUri),
+                new KeyValuePair<string, string>("grant_type", "authorization_code")
+            };
+        }
+
+        /// <summary>
+        /// Converts the token response from the Google OAuth API to its corresponding OAuthToken object.
         /// </summary>
         /// <param name="responseContent">The string of the Json object to convert into a token response object.</param>
         /// <returns>The token response object containing the data in the given content string.</returns>
-        private TokenResponse ConvertToTokenResponse(string responseContent)
+        protected static OAuthToken ConvertResponseToToken(string responseContent)
         {
+            // Parse the response json content.
+            // Response format is documented at: https://developers.google.com/identity/protocols/oauth2/native-app#handlingresponse
             JsonObject responseJson = JsonObject.Parse(responseContent);
-            string token = responseJson["access_token"].GetString();
-            long expiresInSeconds = (long)responseJson["expires_in"].GetNumber();
-            string tokenType = responseJson["token_type"].GetString();
-            string scope = responseJson["scope"].GetString();
-            string refreshToken = responseJson["refresh_token"].GetString();
+            string token = responseJson.ContainsKey("access_token") ? responseJson["access_token"].GetString() : "";
+            long expiresInSeconds = responseJson.ContainsKey("expires_in") ? (long)responseJson["expires_in"].GetNumber() : 0;
+            string tokenType = responseJson.ContainsKey("token_type") ? responseJson["token_type"].GetString() : "";
+            string scope = responseJson.ContainsKey("scope") ? responseJson["scope"].GetString() : "";
+            string refreshToken = responseJson.ContainsKey("refresh_token") ? responseJson["refresh_token"].GetString() : "";
 
             // If the response content contains an issued time, use that. Otherwise, default to Utc now.
             //      This value does not exist from the actual response JSON from Google's API, so this
@@ -530,7 +183,8 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             //      be used.
             DateTime issuedTime = responseJson.ContainsKey("issued_time") ? DateTime.Parse(responseJson["issued_time"].GetString()) : DateTime.UtcNow;
 
-            return new TokenResponse()
+            // Create and return a new instance of the OAuthToken class.
+            return new OAuthToken()
             {
                 AccessToken = token,
                 TokenType = tokenType,
@@ -543,23 +197,41 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         }
 
         /// <summary>
+        /// Gets the parameters for Google's OAuth 2.0 token refresh.
+        /// </summary>
+        /// <param name="refreshToken">The refresh token to be exchanged at the API endpoint for a new authorization token.</param>
+        /// <param name="credentials">The client app's credentials for the Google API.</param>
+        /// <returns>An IList of key value pairs representing the HTTP POST parameters.</returns>
+        private static IList<KeyValuePair<string, string>> GetTokenRefreshParams(string refreshToken, ApiCredential credentials)
+        {
+            // Parameter names are documented at: https://developers.google.com/identity/protocols/oauth2/native-app#exchange-authorization-code
+            return new List<KeyValuePair<string, string>>()
+            {
+                new KeyValuePair<string, string>("client_id", credentials.ClientId),
+                new KeyValuePair<string, string>("client_secret", credentials.ClientSecret),
+                new KeyValuePair<string, string>("refresh_token", refreshToken),
+                new KeyValuePair<string, string>("grant_type", "refresh_token")
+            };
+        }
+
+        /// <summary>
         /// Converts the token response object into a string containing a serialized Json representation of that object.
         /// </summary>
-        /// <param name="tokenResponse">The response to serialize into a string.</param>
+        /// <param name="tokenData">The response to serialize into a string.</param>
         /// <returns>The string containing a serialized Json representation of the given Token Response object.</returns>
-        private string ConvertToJsonString(TokenResponse tokenResponse)
+        private static string ConvertTokenToJsonString(OAuthToken tokenData)
         {
             JsonObject jsonObject = new JsonObject();
-            jsonObject.Add("access_token", JsonValue.CreateStringValue(tokenResponse.AccessToken));
+            jsonObject.Add("access_token", JsonValue.CreateStringValue(tokenData.AccessToken));
 
             // Set the expiration time (lifespan of the token) to zero seconds if no value exists.
-            double expirationTime = tokenResponse.ExpiresInSeconds.HasValue ? (double)tokenResponse.ExpiresInSeconds.Value : 0.0;
+            double expirationTime = tokenData.ExpiresInSeconds.HasValue ? (double)tokenData.ExpiresInSeconds.Value : 0.0;
             jsonObject.Add("expires_in", JsonValue.CreateNumberValue(expirationTime));
 
-            jsonObject.Add("token_type", JsonValue.CreateStringValue(tokenResponse.TokenType));
-            jsonObject.Add("scope", JsonValue.CreateStringValue(tokenResponse.Scope));
-            jsonObject.Add("refresh_token", JsonValue.CreateStringValue(tokenResponse.RefreshToken));
-            jsonObject.Add("issued_time", JsonValue.CreateStringValue(tokenResponse.IssuedUtc.ToString()));
+            jsonObject.Add("token_type", JsonValue.CreateStringValue(tokenData.TokenType));
+            jsonObject.Add("scope", JsonValue.CreateStringValue(tokenData.Scope));
+            jsonObject.Add("refresh_token", JsonValue.CreateStringValue(tokenData.RefreshToken));
+            jsonObject.Add("issued_time", JsonValue.CreateStringValue(tokenData.IssuedUtc.ToString()));
 
             return jsonObject.Stringify();
         }
@@ -605,33 +277,6 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             }
 
             return events;
-        }
-
-        /// <summary>
-        /// Converts a list of events in the Google Calendar API v3 format to a list of
-        /// events in the local app's format.
-        /// </summary>
-        /// <param name="events"></param>
-        /// <returns></returns>
-        private static List<CalendarEvent> ConvertCalendarEventsToLocal(Events events)
-        {
-            // Reference: https://developers.google.com/calendar/concepts/events-calendars
-            List<CalendarEvent> calEvents = new List<CalendarEvent>();
-
-            // Events are stored in the Items collection.
-            foreach (Event eventItem in events.Items)
-            {
-                // Create a new Calendar Event model and add it to the list, initializing
-                //      its properties based on the calendar event from the API.
-                calEvents.Add(new CalendarEvent()
-                {
-                    Name = eventItem.Summary,
-                    Start = eventItem.Start.DateTime.HasValue ? eventItem.Start.DateTime.Value : DateTime.Now,
-                    End = eventItem.End.DateTime.HasValue ? eventItem.End.DateTime.Value : DateTime.Now
-                });
-            }
-
-            return calEvents;
         }
         #endregion
     }

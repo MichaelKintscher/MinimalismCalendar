@@ -355,7 +355,7 @@ namespace MinimalismCalendar.Controllers
         /// <returns></returns>
         private async Task ConnectGoogleCalendarAsync()
         {
-            await GoogleCalendarAPI.Instance.AuthorizeAsync();
+            await GoogleCalendarAPI.Instance.StartOAuthAsync();
         }
         #endregion
     }
