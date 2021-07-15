@@ -20,14 +20,6 @@ namespace MinimalismCalendar.Models.ApiModels
     public abstract class OAuthApi<T> : ApiBase<T> where T : new()
     {
         /// <summary>
-        /// The file name of the file stonring the Google Calendar API OAuth token.
-        /// </summary>
-        private string TokenFileName
-        {
-            get => this.Name + "_token.json";
-        }
-
-        /// <summary>
         /// The authorization endpoint.
         /// </summary>
         private string OAuthEndPoint { get; set; }
@@ -39,7 +31,7 @@ namespace MinimalismCalendar.Models.ApiModels
         private string CredentialsFilePath { get; set; }
 
         /// <summary>
-        /// A cache of the token data for the Google Calendar API.
+        /// A cache of the token data for the API.
         /// </summary>
         private OAuthToken tokenData { get; set; }
 
@@ -130,9 +122,10 @@ namespace MinimalismCalendar.Models.ApiModels
             this.ConvertResponseToToken = convertResponseToToken;
             this.GetTokenRefreshParams = getTokenRefreshParams;
             this.ConvertTokenToJsonString = convertTokenToJsonString;
-
-            this.InitializedTokenDataAsync();
         }
+
+        #region Methods
+        #endregion
 
         #region Methods - OAuth Flow
         /// <summary>
@@ -174,17 +167,14 @@ namespace MinimalismCalendar.Models.ApiModels
         /// <returns>A string containing the HTTP Response received.</returns>
         public override async Task<string> PostAsync(string uri, IList<KeyValuePair<string, string>> parameters)
         {
-            using (this.Client = new HttpClient())
+            if (this.IsAuthorized)
             {
-                if (this.IsAuthorized)
-                {
-                    // Set the authorization header.
-                    this.Client.DefaultRequestHeaders.Authorization =
-                        new Windows.Web.Http.Headers.HttpCredentialsHeaderValue(this.tokenData.TokenType, this.tokenData.AccessToken);
-                }
-
-                return await base.PostAsync(uri, parameters);
+                // Set the authorization header.
+                this.Client.DefaultRequestHeaders.Authorization =
+                    new Windows.Web.Http.Headers.HttpCredentialsHeaderValue(this.tokenData.TokenType, this.tokenData.AccessToken);
             }
+
+            return await base.PostAsync(uri, parameters);
         }
 
         /// <summary>
@@ -213,10 +203,11 @@ namespace MinimalismCalendar.Models.ApiModels
         /// Initializes the token data from the saved token data if it can, otherwise sets
         /// the token data to null.
         /// </summary>
-        private async Task InitializedTokenDataAsync()
+        /// <param name="tokenFileName">The name to give the token save file.</param>
+        protected async Task InitializeTokenDataAsync(string tokenFileName)
         {
             // Try to load the token data.
-            bool loaded = await this.TryLoadTokenDataAsync();
+            bool loaded = await this.TryLoadTokenDataAsync(tokenFileName);
             if (loaded == false)
             {
                 // The load was unsuccessful, so initialize the value to false.
@@ -236,15 +227,14 @@ namespace MinimalismCalendar.Models.ApiModels
         /// Trys to load the OAuth token data from the token file.
         /// </summary>
         /// <returns>Whether the token data was successfully loaded.</returns>
-        private async Task<bool> TryLoadTokenDataAsync()
+        private async Task<bool> TryLoadTokenDataAsync(string tokenFileName)
         {
             System.Diagnostics.Debug.WriteLine("Trying to load API token file...");
             // Read the text from the file.
             string lines = "";
             try
             {
-                //lines = File.ReadAllText(GoogleCalendarAPI.authTokenFilePath);
-                StorageFile tokenFile = await ApplicationData.Current.LocalFolder.GetFileAsync(this.TokenFileName);
+                StorageFile tokenFile = await ApplicationData.Current.LocalFolder.GetFileAsync(tokenFileName);
                 lines = await FileIO.ReadTextAsync(tokenFile);
             }
             catch (Exception ex)
@@ -278,17 +268,18 @@ namespace MinimalismCalendar.Models.ApiModels
         }
 
         /// <summary>
-        /// Saves the authorization data for the current connection to the Google Calendar API to a token file
-        ///     at the authTokenFilePath location.
+        /// Saves the authorization data for the current API connection to a token file
+        ///     with the given name.
         /// </summary>
-        public async Task SaveConnectionDataAsync()
+        /// <param name="tokenFileName">The name to give the token save file.</param>
+        protected async Task SaveConnectionDataAsync(string tokenFileName)
         {
             // Save the token data, if there is any.
             if (this.tokenData != null)
             {
                 string tokenJsonString = this.ConvertTokenToJsonString(this.tokenData);
 
-                StorageFile tokenFile = await ApplicationData.Current.LocalFolder.CreateFileAsync(this.TokenFileName, CreationCollisionOption.ReplaceExisting);
+                StorageFile tokenFile = await ApplicationData.Current.LocalFolder.CreateFileAsync(tokenFileName, CreationCollisionOption.ReplaceExisting);
                 await FileIO.WriteTextAsync(tokenFile, tokenJsonString);
             }
         }

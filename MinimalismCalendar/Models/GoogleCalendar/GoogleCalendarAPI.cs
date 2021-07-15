@@ -58,6 +58,13 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         #endregion
 
         #region Properties
+        /// <summary>
+        /// The file name of the file stonring the Google Calendar API OAuth token.
+        /// </summary>
+        private string TokenFileName
+        {
+            get => this.Name + "_token.json";
+        }
         #endregion
 
         #region Constructors
@@ -68,10 +75,22 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         {
             // Initalize API properties.
             this.Name = "Google Calendar";
+
+            this.InitializeTokenDataAsync(this.TokenFileName);
         }
         #endregion
 
         #region Methods
+        /// <summary>
+        /// Saves the authorization data for the current connection to the Google Calendar API to a token file
+        ///     at the authTokenFilePath location.
+        /// </summary>
+        /// <returns></returns>
+        public async Task SaveConnectionDataAsync()
+        {
+            await this.SaveConnectionDataAsync(this.TokenFileName);
+        }
+
         /// <summary>
         /// Gets a list of events on the authorized user's primary calendar.
         /// See: https://developers.google.com/calendar/api/v3/reference/events/list
