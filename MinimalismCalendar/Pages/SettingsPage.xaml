@@ -52,7 +52,7 @@
                         IsEnabled="{x:Bind InternetConnectionAvailable, Mode=OneWay}"
                         Click="AuthenticateGoogleButton_Click"> Authenticate</Button>
                 <TextBlock x:Name="AuthStatusTextBlock"
-                           Text="{x:Bind GoogleAuthStatus}"></TextBlock>
+                           Text="{x:Bind GoogleAuthStatus, Mode=OneWay}"></TextBlock>
                 <TextBlock x:Name="CalendarEventTestTextBlock"></TextBlock>
             </StackPanel>
         </StackPanel>

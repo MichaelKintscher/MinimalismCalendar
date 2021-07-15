@@ -127,6 +127,7 @@
     <Compile Include="Controllers\SingletonController.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Enums\PageTypes.cs" />
+    <Compile Include="EventArguments\ApiAuthorizedEventArgs.cs" />
     <Compile Include="EventArguments\ApiInitializedEventArgs.cs" />
     <Compile Include="EventArguments\ConnectServiceRequestedEventArgs.cs" />
     <Compile Include="EventArguments\NavigatedEventArgs.cs" />

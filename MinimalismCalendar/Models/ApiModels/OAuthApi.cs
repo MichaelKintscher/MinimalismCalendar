@@ -87,7 +87,7 @@ namespace MinimalismCalendar.Models.ApiModels
         #endregion
 
         #region Events
-        public delegate void InitializedHandler(object sender, ApiInitializedEventArgs e);
+        public delegate void InitializedHandler(object sender, ApiEventArgs e);
         /// <summary>
         /// Raised when the API is initialized.
         /// </summary>
@@ -95,8 +95,20 @@ namespace MinimalismCalendar.Models.ApiModels
         private void RaiseInitialized(string apiName)
         {
             // Create the args and call the listening event handlers, if there are any.
-            ApiInitializedEventArgs args = new ApiInitializedEventArgs(apiName);
+            ApiEventArgs args = new ApiEventArgs(apiName);
             this.Initialized?.Invoke(this, args);
+        }
+
+        public delegate void AuthorizedHandler(object sender, ApiAuthorizedEventArgs e);
+        /// <summary>
+        /// Raised when the API is initialized.
+        /// </summary>
+        public event AuthorizedHandler Authorized;
+        private void RaiseAuthorized(string apiName, bool success)
+        {
+            // Create the args and call the listening event handlers, if there are any.
+            ApiAuthorizedEventArgs args = new ApiAuthorizedEventArgs(apiName, success);
+            this.Authorized?.Invoke(this, args);
         }
         #endregion
 
@@ -151,10 +163,23 @@ namespace MinimalismCalendar.Models.ApiModels
 
             IList<KeyValuePair<string, string>> content = this.GetTokenExchangeParams(authorizationCode, this.OAuthRedirectUri, credentials);
 
-            string responseContent = await this.PostAsync(this.OAuthTokenEndpoint, content);
+            string responseContent = "";
+            bool success = true;
+            try
+            {
+                responseContent = await this.PostAsync(this.OAuthTokenEndpoint, content);
 
-            // No exceptions were thrown, so parse the response message.
-            this.tokenData = this.ConvertResponseToToken(responseContent);
+                // No exceptions were thrown, so parse the response message.
+                this.tokenData = this.ConvertResponseToToken(responseContent);
+            }
+            catch(Exception ex)
+            {
+                // An exception was thrown. The authorization was not a success.
+                success = false;
+            }
+
+            // Raise the authorized event to signal the completion of the get token.
+            this.RaiseAuthorized(this.Name, success);
         }
         #endregion
 

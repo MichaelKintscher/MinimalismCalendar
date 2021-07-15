@@ -47,6 +47,7 @@ namespace MinimalismCalendar.Controllers
 
             // Register for the API initialization events.
             GoogleCalendarAPI.Instance.Initialized += this.GoogleApi_Initialized;
+            GoogleCalendarAPI.Instance.Authorized += this.GoogleApi_Authorized;
 
             // Initialize the controller with a main page as the root and the start state for the app navigation.
             this.RootPage = new MainPage();
@@ -75,12 +76,27 @@ namespace MinimalismCalendar.Controllers
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        public void GoogleApi_Initialized(object sender, ApiInitializedEventArgs e)
+        public void GoogleApi_Initialized(object sender, ApiEventArgs e)
         {
             // If the home page is currently displayed, refresh the calendar.
             if (this.RootPage.CurrentPage is HomePage homePage)
             {
                 this.RefreshHomePageCalendarControlAsync(homePage);
+            }
+        }
+
+        public void GoogleApi_Authorized(object sender, ApiAuthorizedEventArgs e)
+        {
+            // If the home page is currently displayed, refresh the calendar.
+            if (this.RootPage.CurrentPage is HomePage homePage)
+            {
+                this.RefreshHomePageCalendarControlAsync(homePage);
+            }
+            // If the settings page is currently displayed, refresh the API status message.
+            else if (this.RootPage.CurrentPage is SettingsPage settingsPage)
+            {
+                // Update the Google API status.
+                settingsPage.GoogleAuthStatus = GoogleCalendarAPI.Instance.IsAuthorized ? "Good to go!" : "Please reconnect.";
             }
         }
 

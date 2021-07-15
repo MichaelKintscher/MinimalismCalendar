@@ -7,16 +7,16 @@ using System.Threading.Tasks;
 namespace MinimalismCalendar.EventArguments
 {
     /// <summary>
-    /// Contains event info for when an API is initialized.
+    /// Contains event info for when an API event is raised.
     /// </summary>
-    public class ApiInitializedEventArgs : EventArgs
+    public class ApiEventArgs : EventArgs
     {
         /// <summary>
-        /// The name of the Api that was initialized.
+        /// The name of the Api the event was raised for.
         /// </summary>
         public string ApiName { get; private set; }
 
-        public ApiInitializedEventArgs(string apiName)
+        public ApiEventArgs(string apiName)
         {
             this.ApiName = apiName;
         }
