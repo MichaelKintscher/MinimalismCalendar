@@ -101,7 +101,7 @@ namespace MinimalismCalendar.Models.ApiModels
 
         public delegate void AuthorizedHandler(object sender, ApiAuthorizedEventArgs e);
         /// <summary>
-        /// Raised when the API is initialized.
+        /// Raised when the API is authorized.
         /// </summary>
         public event AuthorizedHandler Authorized;
         private void RaiseAuthorized(string apiName, bool success)

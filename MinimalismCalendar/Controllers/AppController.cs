@@ -85,6 +85,11 @@ namespace MinimalismCalendar.Controllers
             }
         }
 
+        /// <summary>
+        /// Handles when the Google Calendar API has changed authorized status.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void GoogleApi_Authorized(object sender, ApiAuthorizedEventArgs e)
         {
             // If the home page is currently displayed, refresh the calendar.

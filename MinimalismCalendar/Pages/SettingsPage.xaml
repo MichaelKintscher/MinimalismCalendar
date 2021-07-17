@@ -11,6 +11,14 @@
 
     <Page.Resources>
         <Converters:BoolToVisibilityConverter x:Key="FalseToVisibleConverter" TrueVisibility="Collapsed" FalseVisibility="Visible"></Converters:BoolToVisibilityConverter>
+        
+        <!-- Styles -->
+        <Style x:Key="DraggableReorderableListView" TargetType="ListView">
+            <Setter Property="CanDragItems" Value="True"></Setter>
+            <Setter Property="CanReorderItems" Value="True"></Setter>
+            <Setter Property="AllowDrop" Value="True"></Setter>
+            <Setter Property="SelectionMode" Value="Single"></Setter>
+        </Style>
     </Page.Resources>
 
     <Grid>
@@ -54,6 +62,32 @@
                 <TextBlock x:Name="AuthStatusTextBlock"
                            Text="{x:Bind GoogleAuthStatus, Mode=OneWay}"></TextBlock>
                 <TextBlock x:Name="CalendarEventTestTextBlock"></TextBlock>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Style="{StaticResource HeaderTextBlockStyle}">Calendars</TextBlock>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="0">Available Calendars</TextBlock>
+
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="1">Displayed Calendars</TextBlock>
+
+                    <ListView x:Name="AvailableCalendarsListView"
+                              Grid.Row="1"
+                              Grid.Column="0"
+                              Style="{StaticResource DraggableReorderableListView}">
+                        
+                    </ListView>
+                </Grid>
             </StackPanel>
         </StackPanel>
     </Grid>
