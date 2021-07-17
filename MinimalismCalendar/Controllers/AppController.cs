@@ -102,6 +102,9 @@ namespace MinimalismCalendar.Controllers
             {
                 // Update the Google API status.
                 settingsPage.GoogleAuthStatus = GoogleCalendarAPI.Instance.IsAuthorized ? "Good to go!" : "Please reconnect.";
+
+                // Refresh the calendars list.
+                this.RefreshSettinsPageCalendarList(settingsPage);
             }
         }
 
@@ -149,12 +152,12 @@ namespace MinimalismCalendar.Controllers
             string toPageName = "";
             if (e.PageNavigatedTo is HomePage homePage)
             {
-                this.InitializeHomePage(homePage);
+                this.InitializeHomePageAsync(homePage);
                 toPageName = "Home Page";
             }
             else if (e.PageNavigatedTo is SettingsPage settingsPage)
             {
-                this.InitializeSettingsPage(settingsPage);
+                this.InitializeSettingsPageAsync(settingsPage);
                 toPageName = "Settings Page";
             }
 
@@ -282,7 +285,7 @@ namespace MinimalismCalendar.Controllers
         /// Initializes the given instance of the home page.
         /// </summary>
         /// <param name="homePage">The instance of the home page to initialize.</param>
-        private async Task InitializeHomePage(HomePage homePage)
+        private async Task InitializeHomePageAsync(HomePage homePage)
         {
             // Subscribe to the new page's events.
             //    - None at the moment.
@@ -299,8 +302,8 @@ namespace MinimalismCalendar.Controllers
         /// <summary>
         /// Initializes the given instance of the settings page.
         /// </summary>
-        /// <param name="settingsPage"></param>
-        private void InitializeSettingsPage(SettingsPage settingsPage)
+        /// <param name="settingsPage">The instance of the settings page to initialize.</param>
+        private async Task InitializeSettingsPageAsync(SettingsPage settingsPage)
         {
             // Subscribe to the new page's events.
             settingsPage.ConnectServiceRequested += this.SettingsPage_ConnectServiceRequested;
@@ -309,6 +312,12 @@ namespace MinimalismCalendar.Controllers
 
             // Update the Google API status.
             settingsPage.GoogleAuthStatus = GoogleCalendarAPI.Instance.IsAuthorized ? "Good to go!" : "Please reconnect.";
+
+            if (GoogleCalendarAPI.Instance.IsAuthorized)
+            {
+                // Refresh the calendars list.
+                await this.RefreshSettinsPageCalendarList(settingsPage);
+            }
         }
 
         /// <summary>
@@ -321,6 +330,22 @@ namespace MinimalismCalendar.Controllers
             List<CalendarEvent> eventList = await GoogleCalendarAPI.Instance.GetCalendarEventsAsync();
             homePage.InitializeCalendarControl(DateTime.Now, eventList);
             System.Diagnostics.Debug.WriteLine("Home page calendar initialized!");
+        }
+
+        /// <summary>
+        /// Refreshes the settings page calendar list.
+        /// </summary>
+        /// <param name="settingsPage">The settings page instance to refresh the calendar list on.</param>
+        /// <returns></returns>
+        private async Task RefreshSettinsPageCalendarList(SettingsPage settingsPage)
+        {
+            // Clear the available calendars list.
+            settingsPage.ClearListOfAvailableCalenders();
+
+            // Get an updated list of available calendars from the Google API and add them to the available
+            //       calendars list.
+            List<Calendar> calendars = await GoogleCalendarAPI.Instance.GetCalendarsAsync();
+            settingsPage.AddCalendarsToAvailable(calendars);
         }
 
         /// <summary>

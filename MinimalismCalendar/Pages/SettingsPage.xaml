@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:Converters="using:MinimalismCalendar.Converters"
+    xmlns:models="using:MinimalismCalendar.Models"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
@@ -84,8 +85,11 @@
                     <ListView x:Name="AvailableCalendarsListView"
                               Grid.Row="1"
                               Grid.Column="0"
+                              ItemsSource="{x:Bind AvailableCalendars, Mode=TwoWay}"
                               Style="{StaticResource DraggableReorderableListView}">
-                        
+                        <DataTemplate x:DataType="models:Calendar">
+                            <TextBlock Text="{x:Bind Name}"></TextBlock>
+                        </DataTemplate>
                     </ListView>
                 </Grid>
             </StackPanel>

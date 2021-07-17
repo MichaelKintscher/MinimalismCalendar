@@ -1,6 +1,8 @@
 ﻿using MinimalismCalendar.EventArguments;
+using MinimalismCalendar.Models;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -53,6 +55,16 @@ namespace MinimalismCalendar.Pages
                 this.RaisePropertyChanged("InternetConnectionAvailable");
             }
         }
+
+        /// <summary>
+        /// A list of calendars that are not displayed, but are available to display.
+        /// </summary>
+        public ObservableCollection<Calendar> AvailableCalendars { get; set; }
+
+        /// <summary>
+        /// A list of calendars that are displayed.
+        /// </summary>
+        public ObservableCollection<Calendar> DisplayedCalendars { get; set; }
         #endregion
 
         #region Events
@@ -109,6 +121,10 @@ namespace MinimalismCalendar.Pages
         public SettingsPage()
         {
             this.InitializeComponent();
+
+            // Initialize the collections.
+            this.AvailableCalendars = new ObservableCollection<Calendar>();
+            this.DisplayedCalendars = new ObservableCollection<Calendar>();
         }
 
         #region Event Handlers
@@ -179,6 +195,24 @@ namespace MinimalismCalendar.Pages
                 default:
                     break;
             }
+        }
+
+        /// <summary>
+        /// Adds the given calendars to the list of available calendars.
+        /// </summary>
+        /// <param name="calendars"></param>
+        public void AddCalendarsToAvailable(List<Calendar> calendars)
+        {
+            // Add each calendar to the available calendars.
+            calendars.ForEach(c => this.AvailableCalendars.Add(c));
+        }
+
+        /// <summary>
+        /// Clears the available calendars list.
+        /// </summary>
+        public void ClearListOfAvailableCalenders()
+        {
+            this.AvailableCalendars.Clear();
         }
         #endregion
     }
