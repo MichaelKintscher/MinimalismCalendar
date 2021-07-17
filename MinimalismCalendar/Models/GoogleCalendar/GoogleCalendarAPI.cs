@@ -92,6 +92,22 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         }
 
         /// <summary>
+        /// Gets a list of calendars for the authorized user.
+        /// See: https://developers.google.com/calendar/api/v3/reference/calendars
+        /// </summary>
+        /// <returns>A list of calendars</returns>
+        public async Task<List<Calendar>> GetCalendarsAsync()
+        {
+            string uri = "https://www.googleapis.com/calendar/v3/users/me/calendarList";
+
+            // Make a GET request to the calendar list endpoint.
+            string calendarListResponseContent = await this.GetAsync(uri);
+
+            // Convert the response content to a list of calendars.
+            return this.GetCalendarsFromCalendarListResponse(calendarListResponseContent);
+        }
+
+        /// <summary>
         /// Gets a list of events on the authorized user's primary calendar.
         /// See: https://developers.google.com/calendar/api/v3/reference/events/list
         /// </summary>
@@ -260,7 +276,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// For formatting, see: https://developers.google.com/calendar/api/v3/reference/events/list
         /// </summary>
         /// <param name="responseContent">The response content formatted in an Events:list response from the Google Calendar API.</param>
-        /// <returns></returns>
+        /// <returns>A list of calendar events on the user's primary calendar.</returns>
         private List<CalendarEvent> GetEventsFromResponse(string responseContent)
         {
             // Parse the list of events from the response content.
@@ -296,6 +312,38 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             }
 
             return events;
+        }
+
+        /// <summary>
+        /// Gets a list of calendar events from the given response content.
+        /// For formatting, see: https://developers.google.com/calendar/api/v3/reference/calendarList/list
+        /// </summary>
+        /// <param name="responseContent">The response content formatted in a CalendarList:list response from the Google Calendar API.</param>
+        /// <returns>A list of calendars from the user's calendar list.</returns>
+        private List<Calendar> GetCalendarsFromCalendarListResponse(string responseContent)
+        {
+            // Parse the response json content.
+            // Response format is documented at: https://developers.google.com/calendar/api/v3/reference/calendarList/list
+            JsonObject responseJson = JsonObject.Parse(responseContent);
+            JsonArray itemsArray = responseJson["items"].GetArray();
+
+            List<Calendar> calendars = new List<Calendar>();
+            foreach(var calendarJsonValue in itemsArray)
+            {
+                // This is necessary because of the type iterated over in the JsonArray.
+                JsonObject calendarJson = calendarJsonValue.GetObject();
+                string id = calendarJson["id"].GetString();
+                string summary = calendarJson["summary"].GetString();
+
+                // Add a new calendar model to the list.
+                calendars.Add(new Calendar()
+                {
+                    ID = id,
+                    Name = summary
+                });
+            }
+
+            return calendars;
         }
         #endregion
     }
