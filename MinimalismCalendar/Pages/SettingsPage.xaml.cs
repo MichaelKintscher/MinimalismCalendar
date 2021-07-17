@@ -1,5 +1,7 @@
 ﻿using MinimalismCalendar.EventArguments;
+using MinimalismCalendar.Managers;
 using MinimalismCalendar.Models;
+using MinimalismCalendar.Utility;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -7,7 +9,9 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
@@ -136,6 +140,110 @@ namespace MinimalismCalendar.Pages
         private void AuthenticateGoogleButton_Click(object sender, RoutedEventArgs e)
         {
             this.RaiseConnectServiceRequested("Google");
+        }
+
+        /// <summary>
+        /// Handles when the user starts to drag items on a listview.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+        {
+            // For each item in the items being dragged...
+            StringBuilder builder = new StringBuilder();
+            foreach (Calendar calendar in e.Items)
+            {
+                // Put each item on a new line (new line not necessary for the first item).
+                if (builder.Length > 0)
+                {
+                    builder.AppendLine();
+                }
+
+                // Append the item.
+                builder.Append(CalendarManager.ConvertToJson(calendar).ToString());
+            }
+
+            // Set the content and requested operation of the data package.
+            e.Data.SetText(builder.ToString());
+            e.Data.RequestedOperation = DataPackageOperation.Move;
+        }
+
+        /// <summary>
+        /// Handles when a user drags items over a list view. 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ListView_DragOver(object sender, DragEventArgs e)
+        {
+            e.AcceptedOperation = DataPackageOperation.Move;
+        }
+
+        /// <summary>
+        /// Handles when a user drops items on a list view.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void ListView_Drop(object sender, DragEventArgs e)
+        {
+            // Get a reference to the target list view (the one the items
+            //      are being dropped onto).
+            ListView target = (ListView)sender;
+
+            // Get a reference to the source and destination data collections.
+            ListView source;
+            ObservableCollection<Calendar> sourceCollection;
+            ObservableCollection<Calendar> destinationCollection;
+            if (target.Name == "AvailableCalendarsListView")
+            {
+                source = this.DisplayedCalendarsListView;
+                sourceCollection = this.DisplayedCalendars;
+                destinationCollection = this.AvailableCalendars;
+            }
+            else
+            {
+                source = this.AvailableCalendarsListView;
+                sourceCollection = this.AvailableCalendars;
+                destinationCollection = this.DisplayedCalendars;
+            }
+
+            // If the drag and drop contains text...
+            if (e.DataView.Contains(StandardDataFormats.Text))
+            {
+                // Get a deferral, to support async drag and drop.
+                DragOperationDeferral def = e.GetDeferral();
+
+                // Get the string from the dropped data package, and split
+                //      the lines out.
+                string dataString = await e.DataView.GetTextAsync();
+                string[] items = dataString.Split('\n');
+
+                // For each dropped item...
+                foreach (string item in items)
+                {
+                    // Create a calendar object from the item string.
+                    Calendar calendar = CalendarManager.ParseCalendarJson(item);
+
+                    // Find the insertion index
+                    int index = DragDropHelper.GetDropInsertionIndex(e, target);
+
+                    // Insert the dropped item at the insertion index.
+                    destinationCollection.Insert(index, calendar);
+
+                    // Remove the dropped items from the source list.
+                    foreach (Calendar calItem in source.Items)
+                    {
+                        if (CalendarManager.Equals(calItem, calendar))
+                        {
+                            sourceCollection.Remove(calItem);
+                            break;
+                        }
+                    }
+                }
+
+                // Complete the deferral.
+                e.AcceptedOperation = DataPackageOperation.Move;
+                def.Complete();
+            }
         }
         #endregion
 

@@ -138,6 +138,7 @@
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Managers\CalendarManager.cs" />
     <Compile Include="Models\ApiModels\ApiBase.cs" />
     <Compile Include="Models\ApiModels\ApiCredential.cs" />
     <Compile Include="Models\ApiModels\OAuthApi.cs" />
@@ -161,6 +162,7 @@
       <DependentUpon>DayAgendaControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Utility\DateUtility.cs" />
+    <Compile Include="Utility\DragDropHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

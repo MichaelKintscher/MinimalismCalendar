@@ -19,6 +19,7 @@
             <Setter Property="CanReorderItems" Value="True"></Setter>
             <Setter Property="AllowDrop" Value="True"></Setter>
             <Setter Property="SelectionMode" Value="Single"></Setter>
+            <Setter Property="MinHeight" Value="200"></Setter>
         </Style>
     </Page.Resources>
 
@@ -86,10 +87,30 @@
                               Grid.Row="1"
                               Grid.Column="0"
                               ItemsSource="{x:Bind AvailableCalendars, Mode=TwoWay}"
-                              Style="{StaticResource DraggableReorderableListView}">
-                        <DataTemplate x:DataType="models:Calendar">
-                            <TextBlock Text="{x:Bind Name}"></TextBlock>
-                        </DataTemplate>
+                              Style="{StaticResource DraggableReorderableListView}"
+                              DragItemsStarting="ListView_DragItemsStarting"
+                              DragOver="ListView_DragOver"
+                              Drop="ListView_Drop">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:Calendar">
+                                <TextBlock Text="{x:Bind Name}"></TextBlock>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <ListView x:Name="DisplayedCalendarsListView"
+                              Grid.Row="1"
+                              Grid.Column="1"
+                              ItemsSource="{x:Bind DisplayedCalendars, Mode=TwoWay}"
+                              Style="{StaticResource DraggableReorderableListView}"
+                              DragItemsStarting="ListView_DragItemsStarting"
+                              DragOver="ListView_DragOver"
+                              Drop="ListView_Drop">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:Calendar">
+                                <TextBlock Text="{x:Bind Name}"></TextBlock>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
                     </ListView>
                 </Grid>
             </StackPanel>
