@@ -63,12 +63,12 @@ namespace MinimalismCalendar.Pages
         /// <summary>
         /// A list of calendars that are not displayed, but are available to display.
         /// </summary>
-        public ObservableCollection<Calendar> AvailableCalendars { get; set; }
+        public ObservableCollection<Calendar> HiddenCalendars { get; set; }
 
         /// <summary>
         /// A list of calendars that are displayed.
         /// </summary>
-        public ObservableCollection<Calendar> DisplayedCalendars { get; set; }
+        public ObservableCollection<Calendar> VisibleCalendars { get; set; }
         #endregion
 
         #region Events
@@ -120,6 +120,18 @@ namespace MinimalismCalendar.Pages
             RetryOauthRequestedEventArgs args = new RetryOauthRequestedEventArgs(serviceName);
             this.RetryOauthRequested?.Invoke(this, args);
         }
+
+        public delegate void CalendarVisibilityChangedHandler(object sender, CalendarVisibilityChangedEventArgs e);
+        /// <summary>
+        /// Raised when a calendar's visibility changed.
+        /// </summary>
+        public event CalendarVisibilityChangedHandler CalendarVisibilityChanged;
+        private void RaiseCalendarVisibilityChanged(string calendarName, CalendarVisibility newVisibility)
+        {
+            // Create the args and call the listening event handlers, if there are any.
+            CalendarVisibilityChangedEventArgs args = new CalendarVisibilityChangedEventArgs(calendarName, newVisibility);
+            this.CalendarVisibilityChanged?.Invoke(this, args);
+        }
         #endregion
 
         public SettingsPage()
@@ -127,8 +139,8 @@ namespace MinimalismCalendar.Pages
             this.InitializeComponent();
 
             // Initialize the collections.
-            this.AvailableCalendars = new ObservableCollection<Calendar>();
-            this.DisplayedCalendars = new ObservableCollection<Calendar>();
+            this.HiddenCalendars = new ObservableCollection<Calendar>();
+            this.VisibleCalendars = new ObservableCollection<Calendar>();
         }
 
         #region Event Handlers
@@ -193,17 +205,17 @@ namespace MinimalismCalendar.Pages
             ListView source;
             ObservableCollection<Calendar> sourceCollection;
             ObservableCollection<Calendar> destinationCollection;
-            if (target.Name == "AvailableCalendarsListView")
+            if (target.Name == "HiddenCalendarsListView")
             {
-                source = this.DisplayedCalendarsListView;
-                sourceCollection = this.DisplayedCalendars;
-                destinationCollection = this.AvailableCalendars;
+                source = this.VisibleCalendarsListView;
+                sourceCollection = this.VisibleCalendars;
+                destinationCollection = this.HiddenCalendars;
             }
             else
             {
-                source = this.AvailableCalendarsListView;
-                sourceCollection = this.AvailableCalendars;
-                destinationCollection = this.DisplayedCalendars;
+                source = this.HiddenCalendarsListView;
+                sourceCollection = this.HiddenCalendars;
+                destinationCollection = this.VisibleCalendars;
             }
 
             // If the drag and drop contains text...
@@ -238,6 +250,10 @@ namespace MinimalismCalendar.Pages
                             break;
                         }
                     }
+
+                    // Raise the calendar visibility changed event.
+                    CalendarVisibility newVisibility = (target.Name == "HiddenCalendarsListView") ? CalendarVisibility.Hidden : CalendarVisibility.Visible;
+                    this.RaiseCalendarVisibilityChanged(calendar.Name, newVisibility);
                 }
 
                 // Complete the deferral.
@@ -306,21 +322,35 @@ namespace MinimalismCalendar.Pages
         }
 
         /// <summary>
-        /// Adds the given calendars to the list of available calendars.
+        /// Adds the given calendars to the list of calendars corresponding with the given visibility.
         /// </summary>
-        /// <param name="calendars"></param>
-        public void AddCalendarsToAvailable(List<Calendar> calendars)
+        /// <param name="calendars">The list of calendars to add.</param>
+        /// <param name="visibility">The visibility to add the given list of calendars to.</param>
+        public void AddCalendars(List<Calendar> calendars, CalendarVisibility visibility)
         {
-            // Add each calendar to the available calendars.
-            calendars.ForEach(c => this.AvailableCalendars.Add(c));
+            // Depending on the visibility given...
+            switch (visibility)
+            {
+                case CalendarVisibility.Visible:
+                    // Add each calendar to the displayed calendars.
+                    calendars.ForEach(c => this.VisibleCalendars.Add(c));
+                    break;
+                case CalendarVisibility.Hidden:
+                    // Add each calendar to the available calendars.
+                    calendars.ForEach(c => this.HiddenCalendars.Add(c));
+                    break;
+                default:
+                    break;
+            }
         }
 
         /// <summary>
-        /// Clears the available calendars list.
+        /// Clears the calendars lists.
         /// </summary>
-        public void ClearListOfAvailableCalenders()
+        public void ClearCalenderLists()
         {
-            this.AvailableCalendars.Clear();
+            this.HiddenCalendars.Clear();
+            this.VisibleCalendars.Clear();
         }
         #endregion
     }

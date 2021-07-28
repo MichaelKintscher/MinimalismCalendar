@@ -51,6 +51,41 @@ namespace MinimalismCalendar.Models.AppConfigModels
         }
 
         /// <summary>
+        /// Adds the given calendar to a list of hidden calendars.
+        /// </summary>
+        /// <param name="name">The name of the calendar to add to the list of hidden calendars. The name should be unique among the calendar records in the list.</param>
+        public void AddToHiddenCalendars(string name)
+        {
+            // Create a new calendar record and add it to the list.
+            this.HiddenCalendars.Add(new HiddenCalendarRecord()
+            {
+                CalendarName = name
+            });
+        }
+
+        /// <summary>
+        /// Removes the given calendar from the list of hidden calendars.
+        /// </summary>
+        /// <param name="name">The name of the calendar to remove from the list of hidden calendars. The name is assumed to be unique among the calendar records in the list.</param>
+        /// <returns>True if the given calendar was removed, false otherwise.</returns>
+        public bool RemoveFromHiddenCalendars(string name)
+        {
+            bool removed = false;
+
+            // Try to get a reference to the record of this calendar.
+            HiddenCalendarRecord record = this.HiddenCalendars.Where(r => r.CalendarName == name).FirstOrDefault();
+
+            // If the calendar is in the list of hidden calendars, remove it.
+            if (record != null)
+            {
+                this.HiddenCalendars.Remove(record);
+                removed = true;
+            }
+
+            return removed;
+        }
+
+        /// <summary>
         /// Saves to a config file the list of calendars the user has set to be hidden.
         /// </summary>
         /// <returns></returns>

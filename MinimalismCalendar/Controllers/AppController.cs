@@ -2,6 +2,7 @@
 using MinimalismCalendar.Enums;
 using MinimalismCalendar.EventArguments;
 using MinimalismCalendar.Models;
+using MinimalismCalendar.Models.AppConfigModels;
 using MinimalismCalendar.Models.GoogleCalendar;
 using MinimalismCalendar.Pages;
 using System;
@@ -178,6 +179,7 @@ namespace MinimalismCalendar.Controllers
                 settingsPageFrom.ConnectServiceRequested -= this.SettingsPage_ConnectServiceRequested;
                 settingsPageFrom.OauthCodeAcquired -= this.SettingsPage_OauthCodeAcquired;
                 settingsPageFrom.RetryOauthRequested -= this.SettingsPage_ConnectServiceRequested;
+                settingsPageFrom.CalendarVisibilityChanged -= this.SettingsPage_CalendarVisibilityChanged;
                 fromPageName = "Settings Page";
             }
 
@@ -225,6 +227,29 @@ namespace MinimalismCalendar.Controllers
                 GoogleCalendarAPI.Instance.GetOauthTokenAsync(e.Code);
             }
         }
+
+        /// <summary>
+        /// Handles when the user changes the visibility of a calendar from the settings page.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SettingsPage_CalendarVisibilityChanged(object sender, CalendarVisibilityChangedEventArgs e)
+        {
+            // Based on the visibility the calendar was set to...
+            switch (e.Visibility)
+            {
+                case CalendarVisibility.Visible:
+                    // The calendar was set to visible, so remove it from the hidden calendars list.
+                    AppConfig.Instance.RemoveFromHiddenCalendars(e.CalendarName);
+                    break;
+                case CalendarVisibility.Hidden:
+                    // The calendar was set to hidden, so add it to the hidden calendars list.
+                    AppConfig.Instance.AddToHiddenCalendars(e.CalendarName);
+                    break;
+                default:
+                    break;
+            }
+        }
         #endregion
 
         #region Methods
@@ -269,6 +294,9 @@ namespace MinimalismCalendar.Controllers
         {
             // Save the connection state for the Google Calendar API Connection.
             await GoogleCalendarAPI.Instance.SaveConnectionDataAsync();
+
+            // Save the user's app config settings.
+            await AppConfig.Instance.SaveHiddenCalendarsAsync();
         }
         #endregion
 
@@ -309,6 +337,7 @@ namespace MinimalismCalendar.Controllers
             settingsPage.ConnectServiceRequested += this.SettingsPage_ConnectServiceRequested;
             settingsPage.OauthCodeAcquired += this.SettingsPage_OauthCodeAcquired;
             settingsPage.RetryOauthRequested += this.SettingsPage_ConnectServiceRequested;
+            settingsPage.CalendarVisibilityChanged += this.SettingsPage_CalendarVisibilityChanged;
 
             // Update the Google API status.
             settingsPage.GoogleAuthStatus = GoogleCalendarAPI.Instance.IsAuthorized ? "Good to go!" : "Please reconnect.";
@@ -340,12 +369,30 @@ namespace MinimalismCalendar.Controllers
         private async Task RefreshSettinsPageCalendarList(SettingsPage settingsPage)
         {
             // Clear the available calendars list.
-            settingsPage.ClearListOfAvailableCalenders();
+            settingsPage.ClearCalenderLists();
 
-            // Get an updated list of available calendars from the Google API and add them to the available
-            //       calendars list.
+            // Get an updated list of available calendars from the Google API.
             List<Calendar> calendars = await GoogleCalendarAPI.Instance.GetCalendarsAsync();
-            settingsPage.AddCalendarsToAvailable(calendars);
+
+            // Get a list of the hidden calendars from the app's config settings.
+            List<HiddenCalendarRecord> records = await AppConfig.Instance.GetHiddenCalendarsAsync();
+
+            // Split the list of calendars from the Google API into visible vs hidden calendars, based on
+            //      whether there exists a record for that calendar in the hidden calendar records.
+            List<Calendar> visibleCalendars = calendars.Where(c =>
+                    records.Where(r =>
+                            r.CalendarName == c.Name
+                            ).FirstOrDefault() == null
+                    ).ToList();
+            List<Calendar> hiddenCalendars = calendars.Where(c =>
+                    records.Where(r =>
+                            r.CalendarName == c.Name
+                            ).FirstOrDefault() != null
+                    ).ToList();
+
+            // Add the calendars to their appropriate lists.
+            settingsPage.AddCalendars(visibleCalendars, CalendarVisibility.Visible);
+            settingsPage.AddCalendars(hiddenCalendars, CalendarVisibility.Hidden);
         }
 
         /// <summary>

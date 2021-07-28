@@ -129,6 +129,7 @@
     <Compile Include="Enums\PageTypes.cs" />
     <Compile Include="EventArguments\ApiAuthorizedEventArgs.cs" />
     <Compile Include="EventArguments\ApiInitializedEventArgs.cs" />
+    <Compile Include="EventArguments\CalendarVisibilityChangedEventArgs.cs" />
     <Compile Include="EventArguments\ConnectServiceRequestedEventArgs.cs" />
     <Compile Include="EventArguments\NavigatedEventArgs.cs" />
     <Compile Include="EventArguments\NavigationRequestedEventArgs.cs" />
