@@ -12,6 +12,10 @@ namespace MinimalismCalendar.Models
     public class CalendarEvent
     {
         /// <summary>
+        /// The unique ID of the event, assigned by the connected service the event is from.
+        /// </summary>
+        public string ID { get; set; }
+        /// <summary>
         /// The friendly name of the event.
         /// </summary>
         public string Name { get; set; }

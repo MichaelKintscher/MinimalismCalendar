@@ -30,7 +30,7 @@ namespace MinimalismCalendar.UserControls
         /// <summary>
         /// A list to track all of the event TextBlocks on the agenda.
         /// </summary>
-        private List<Border> eventBlocks;
+        private Dictionary<string, Border> eventBlocks;
 
         #region Properties
         public DateTime Date { get; set; }
@@ -75,7 +75,7 @@ namespace MinimalismCalendar.UserControls
             this.InitializeComponent();
 
             // Initialize the collections.
-            this.eventBlocks = new List<Border>();
+            this.eventBlocks = new Dictionary<string, Border>();
             this.CalendarEvents = new ObservableCollection<CalendarEvent>();
 
             // Subscribe to the changed event for the Calendar Events collection.
@@ -90,45 +90,60 @@ namespace MinimalismCalendar.UserControls
         /// <param name="e"></param>
         private void CalendarEventsChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            // Refresh all of the day adenga views.
-            //      NOTE: This can be optimized to only refresh the necessary views - those
-            //      displaying the affected calendar events.
-            this.AddEvents(this.CalendarEvents.ToList());
+            // Refresh the events on the view.
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    // Add each of the newly added events to the view.
+                    foreach (CalendarEvent calEvent in e.NewItems)
+                    {
+                        this.AddEvent(calEvent);
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Move:
+                    // Nothing to do in this case because order doesn't matter.
+                    break;
+
+                case NotifyCollectionChangedAction.Remove:
+                    // Remove each of the removed events from the view.
+                    foreach (CalendarEvent calEvent in e.OldItems)
+                    {
+                        this.RemoveEvent(calEvent);
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Replace:
+                    // Add each of the newly added events to the view.
+                    foreach (CalendarEvent calEvent in e.NewItems)
+                    {
+                        this.AddEvent(calEvent);
+                    }
+                    // Remove each of the removed events from the view.
+                    foreach (CalendarEvent calEvent in e.OldItems)
+                    {
+                        this.RemoveEvent(calEvent);
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Reset:
+                    // Clear all events from the view.
+                    this.Clear();
+                    break;
+
+                default:
+                    // Nothing to do here - this should never happen.
+                    break;
+            }
         }
         #endregion
 
         #region Methods
-        /// <summary>
-        /// Clears the events from the control.
-        /// </summary>
-        public void Clear()
-        {
-            // Remove all of the event blocks from the canvas.
-            this.eventBlocks.ForEach(b => this.AgendaCanvas.Children.Remove(b));
-
-            // Now clear the event block references.
-            this.eventBlocks.Clear();
-
-            // Finally, clear the calendar events list.
-            this.CalendarEvents.Clear();
-        }
         #endregion
 
         #region Helper Methods
         /// <summary>
-        /// Adds the given list of events to the agenda view. ONLY CALL THIS AFTER THE LOADED EVENT HAS FIRED.
-        /// </summary>
-        /// <param name="events">The list of calendar events to add to the agenda view.</param>
-        private void AddEvents(List<CalendarEvent> events)
-        {
-            foreach (CalendarEvent calEvent in events)
-            {
-                this.AddEvent(calEvent);
-            }
-        }
-
-        /// <summary>
-        /// Adds the given event to the agenda view.
+        /// Adds the given event to the agenda view. ONLY CALL THIS AFTER THE LOADED EVENT HAS FIRED.
         /// </summary>
         /// <param name="calEvent">The calendar event to add to the agenda view.</param>
         private void AddEvent(CalendarEvent calEvent)
@@ -160,10 +175,36 @@ namespace MinimalismCalendar.UserControls
             // Add the UI to the canvas.
             this.AgendaCanvas.Children.Add(border);
 
-            this.eventBlocks.Add(border);
+            this.eventBlocks.Add(calEvent.ID, border);
 
             // Use this line to observe unecessary repetitions of this event call.
             System.Diagnostics.Debug.WriteLine("AddEvent executed from " + this.Name +" control for event name: " + calEvent.Name + " at ROW " + row + " with vertical offset " + verticalOffset);
+        }
+
+        /// <summary>
+        /// Removes the given event from the agenda view. ONLY CALL THIS AFTER THE LOADED EVENT HAS FIRED.
+        /// </summary>
+        /// <param name="calEvent">The calendar event to remove from the agenda view.</param>
+        private void RemoveEvent(CalendarEvent calEvent)
+        {
+            // Remove the event block from the canvas.
+            Border eventBlock = this.eventBlocks[calEvent.ID];
+            this.AgendaCanvas.Children.Remove(eventBlock);
+
+            // Now remove the event block reference.
+            this.eventBlocks.Remove(calEvent.ID);
+        }
+
+        /// <summary>
+        /// Clears the events from the control.
+        /// </summary>
+        private void Clear()
+        {
+            // Remove all of the event blocks from the canvas.
+            this.eventBlocks.Values.ToList().ForEach(b => this.AgendaCanvas.Children.Remove(b));
+
+            // Now clear the event block references.
+            this.eventBlocks.Clear();
         }
         #endregion
     }

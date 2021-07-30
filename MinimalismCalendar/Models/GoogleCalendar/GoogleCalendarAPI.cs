@@ -291,6 +291,9 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                 // This is necessary because of the type iterated over in the JsonArray.
                 JsonObject eventJson = eventJsonValue.GetObject();
 
+                // Pares the event's ID.
+                string id = eventJson["id"].GetString();
+
                 // Parse the event's title (summary).
                 string summary = eventJson["summary"].GetString();
 
@@ -305,6 +308,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
                 // Add a new calendar event model to the list.
                 events.Add(new CalendarEvent()
                 {
+                    ID = id,
                     Name = summary,
                     Start = start,
                     End = end

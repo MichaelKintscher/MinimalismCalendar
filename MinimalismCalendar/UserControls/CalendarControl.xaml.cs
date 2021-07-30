@@ -260,7 +260,7 @@ namespace MinimalismCalendar.UserControls
         private void RefreshDayAgendaControl(DayAgendaControl control)
         {
             // Clear the existing events.
-            control.Clear();
+            control.CalendarEvents.Clear();
 
             // Add the updated list of events to the control.
             //      NOTE: this can be optimized in two ways:

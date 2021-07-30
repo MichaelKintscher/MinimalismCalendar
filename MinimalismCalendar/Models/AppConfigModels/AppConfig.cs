@@ -91,6 +91,12 @@ namespace MinimalismCalendar.Models.AppConfigModels
         /// <returns></returns>
         public async Task SaveHiddenCalendarsAsync()
         {
+            // There are no hidden calendars to save.
+            if (this.HiddenCalendars == null)
+            {
+                return;
+            }
+
             // For each record in the list of hidden calendars...
             JsonArray calsArray = new JsonArray();
             foreach(HiddenCalendarRecord record in this.HiddenCalendars)
