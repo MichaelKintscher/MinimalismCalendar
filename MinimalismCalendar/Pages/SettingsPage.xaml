@@ -11,6 +11,7 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
+        <Converters:BoolToVisibilityConverter x:Key="TrueToVisibleConverter" TrueVisibility="Visible" FalseVisibility="Collapsed"></Converters:BoolToVisibilityConverter>
         <Converters:BoolToVisibilityConverter x:Key="FalseToVisibleConverter" TrueVisibility="Collapsed" FalseVisibility="Visible"></Converters:BoolToVisibilityConverter>
         
         <!-- Styles -->
@@ -57,6 +58,49 @@
             <StackPanel>
                 <TextBlock Style="{StaticResource HeaderTextBlockStyle}"
                            Text="Google Account"></TextBlock>
+                <ListView x:Name="AccountsListView"
+                          ItemsSource="{x:Bind Accounts, Mode=OneWay}"
+                          SelectionMode="None">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:CalendarProviderAccount">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                                           Text="{x:Bind NickName}"></TextBlock>
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            Visibility="{x:Bind Connected, Converter={StaticResource TrueToVisibleConverter}}">
+                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                              Glyph="&#xF386;"></FontIcon>
+                                    <TextBlock Text="Connected"></TextBlock>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            Visibility="{x:Bind Connected, Converter={StaticResource FalseToVisibleConverter}}">
+                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                              Glyph="&#xE871;"></FontIcon>
+                                    <TextBlock Text="Connection Error"></TextBlock>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2"
+                                           Text="{x:Bind UserName}"></TextBlock>
+                                <TextBlock Grid.Column="3"
+                                           Text="{x:Bind Provider}"></TextBlock>
+                                <Button Grid.Column="4"
+                                        CommandParameter="{x:Bind NickName}">
+                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                              Glyph="&#xE107;"></FontIcon>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
                 <!-- Button is disabled when no internet connection is available. -->
                 <Button x:Name="AuthenticateGoogleButton"
                         IsEnabled="{x:Bind InternetConnectionAvailable, Mode=OneWay}"

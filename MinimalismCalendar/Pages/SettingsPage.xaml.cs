@@ -60,6 +60,8 @@ namespace MinimalismCalendar.Pages
             }
         }
 
+        public ObservableCollection<CalendarProviderAccount> Accounts { get; set; }
+
         /// <summary>
         /// A list of calendars that are not displayed, but are available to display.
         /// </summary>

@@ -140,6 +140,7 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Managers\CalendarManager.cs" />
+    <Compile Include="Managers\CalendarProviderAccountManager.cs" />
     <Compile Include="Managers\HiddenCalendarRecordManager.cs" />
     <Compile Include="Models\ApiModels\ApiBase.cs" />
     <Compile Include="Models\ApiModels\ApiCredential.cs" />
@@ -150,6 +151,7 @@
     <Compile Include="Models\AppConfigModels\HiddenCalendarRecord.cs" />
     <Compile Include="Models\Calendar.cs" />
     <Compile Include="Models\CalendarEvent.cs" />
+    <Compile Include="Models\CalendarProviderAccount.cs" />
     <Compile Include="Models\GoogleCalendar\GoogleCalendarAPI.cs" />
     <Compile Include="Models\TestDataGenerator.cs" />
     <Compile Include="Pages\HomePage.xaml.cs">
