@@ -149,10 +149,72 @@ namespace MinimalismCalendar.UserControls
         /// <param name="e"></param>
         private void CalendarEventsChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            // Refresh all of the day adenga views.
-            //      NOTE: This can be optimized to only refresh the necessary views - those
-            //      displaying the affected calendar events.
-            this.RefreshDayAgendaControls(this.DayAgendaControls);
+            // Propagate the change in events to the relevant agenda view controls.
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    // Add each of the newly added events to the corresponding day's agenda control.
+                    foreach (CalendarEvent calEvent in e.NewItems)
+                    {
+                        DayAgendaControl control = this.DayAgendaControls.Where(c => c.Date == calEvent.Start).FirstOrDefault();
+                        // The null check accounts for events that may not be currently displayed because they are on a different week.
+                        if (control != null)
+                        {
+                            control.CalendarEvents.Add(calEvent);
+                        }
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Move:
+                    // Nothing to do in this case because order doesn't matter.
+                    break;
+
+                case NotifyCollectionChangedAction.Remove:
+                    // Remove each of the removed events from the corresponding day's agenda control.
+                    foreach (CalendarEvent calEvent in e.OldItems)
+                    {
+                        DayAgendaControl control = this.DayAgendaControls.Where(c => c.Date == calEvent.Start).FirstOrDefault();
+                        // The null check accounts for events that may not be currently displayed because they are on a different week.
+                        if (control != null)
+                        {
+                            control.CalendarEvents.Remove(calEvent);
+                        }
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Replace:
+                    // Add each of the newly added events to the corresponding day's agenda control.
+                    foreach (CalendarEvent calEvent in e.NewItems)
+                    {
+                        DayAgendaControl control = this.DayAgendaControls.Where(c => c.Date == calEvent.Start).FirstOrDefault();
+                        // The null check accounts for events that may not be currently displayed because they are on a different week.
+                        if (control != null)
+                        {
+                            control.CalendarEvents.Add(calEvent);
+                        }
+                    }
+                    // Remove each of the removed events from the corresponding day's agenda control.
+                    foreach (CalendarEvent calEvent in e.OldItems)
+                    {
+                        DayAgendaControl control = this.DayAgendaControls.Where(c => c.Date == calEvent.Start).FirstOrDefault();
+                        // The null check accounts for events that may not be currently displayed because they are on a different week.
+                        if (control != null)
+                        {
+                            control.CalendarEvents.Remove(calEvent);
+                        }
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Reset:
+                    // Clear all events from the view.
+                    foreach (DayAgendaControl control in this.DayAgendaControls)
+                    {
+                        control.CalendarEvents.Clear();
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
 
         /// <summary>
