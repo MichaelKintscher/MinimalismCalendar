@@ -70,6 +70,7 @@
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Grid.Column="0"
@@ -93,10 +94,13 @@
                                 <TextBlock Grid.Column="3"
                                            Text="{x:Bind Provider}"></TextBlock>
                                 <Button Grid.Column="4"
-                                        CommandParameter="{x:Bind NickName}">
+                                        Tag="{x:Bind ID}"
+                                        Click="RemoveAccountButton_Click">
                                     <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
                                               Glyph="&#xE107;"></FontIcon>
                                 </Button>
+                                <TextBlock Grid.Column="5"
+                                           Text="{x:Bind LastSynced}"></TextBlock>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>

@@ -87,16 +87,16 @@ namespace MinimalismCalendar.Pages
             }
         }
 
-        public delegate void ConnectServiceRequestedHandler(object sender, ConnectServiceRequestedEventArgs e);
+        public delegate void ChangeAccountConnectionRequestedHandler(object sender, ChangeAccountConnectionRequestedEventArgs e);
         /// <summary>
-        /// Raised when the a request is issued to connect a service.
+        /// Raised when the a request is issued to change the connection to a service.
         /// </summary>
-        public event ConnectServiceRequestedHandler ConnectServiceRequested;
-        private void RaiseConnectServiceRequested(string serviceName)
+        public event ChangeAccountConnectionRequestedHandler ChangeAccountConnectionRequested;
+        private void RaiseChangeAccountConnectionRequested(string serviceName, ConnectionAction action)
         {
             // Create the args and call the listening event handlers, if there are any.
-            ConnectServiceRequestedEventArgs args = new ConnectServiceRequestedEventArgs(serviceName);
-            this.ConnectServiceRequested?.Invoke(this, args);
+            ChangeAccountConnectionRequestedEventArgs args = new ChangeAccountConnectionRequestedEventArgs(serviceName, action);
+            this.ChangeAccountConnectionRequested?.Invoke(this, args);
         }
 
         public delegate void OauthCodeAcquiredHandler(object sender, OauthCodeAcquiredEventArgs e);
@@ -109,18 +109,6 @@ namespace MinimalismCalendar.Pages
             // Create the args and call the listening event handlers, if there are any.
             OauthCodeAcquiredEventArgs args = new OauthCodeAcquiredEventArgs(serviceName, code);
             this.OauthCodeAcquired?.Invoke(this, args);
-        }
-
-        public delegate void RetryOauthRequestedHandler(object sender, RetryOauthRequestedEventArgs e);
-        /// <summary>
-        /// Raised when the a request is issued to connect a service.
-        /// </summary>
-        public event RetryOauthRequestedHandler RetryOauthRequested;
-        private void RaiseRetryOauthRequested(string serviceName)
-        {
-            // Create the args and call the listening event handlers, if there are any.
-            RetryOauthRequestedEventArgs args = new RetryOauthRequestedEventArgs(serviceName);
-            this.RetryOauthRequested?.Invoke(this, args);
         }
 
         public delegate void CalendarVisibilityChangedHandler(object sender, CalendarVisibilityChangedEventArgs e);
@@ -141,6 +129,7 @@ namespace MinimalismCalendar.Pages
             this.InitializeComponent();
 
             // Initialize the collections.
+            this.Accounts = new ObservableCollection<CalendarProviderAccount>();
             this.HiddenCalendars = new ObservableCollection<Calendar>();
             this.VisibleCalendars = new ObservableCollection<Calendar>();
         }
@@ -153,7 +142,22 @@ namespace MinimalismCalendar.Pages
         /// <param name="e"></param>
         private void AuthenticateGoogleButton_Click(object sender, RoutedEventArgs e)
         {
-            this.RaiseConnectServiceRequested("Google");
+            this.RaiseChangeAccountConnectionRequested("Google", ConnectionAction.Connect);
+        }
+
+        /// <summary>
+        /// Handles the button click to remove a signed in account.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RemoveAccountButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button)
+            {
+                // Get the acount ID and then raise the RaiseChangeAccountConnectionRequested event.
+                string accountId = button.Tag.ToString();
+                this.RaiseChangeAccountConnectionRequested("Google", ConnectionAction.Disconnect);
+            }
         }
 
         /// <summary>
@@ -312,8 +316,8 @@ namespace MinimalismCalendar.Pages
                     // Nothing to do... just close the dialog.
                     break;
                 case ContentDialogResult.Primary:
-                    // Raise the retry OAuth request event.
-                    this.RaiseRetryOauthRequested(serviceName);
+                    // Raise the RaiseChangeAccountConnectionRequested event to an retry connecting.
+                    this.RaiseChangeAccountConnectionRequested(serviceName, ConnectionAction.RetryConnect);
                     break;
                 case ContentDialogResult.Secondary:
                     // Nothing to do... just close the dialog.

@@ -12,6 +12,10 @@ namespace MinimalismCalendar.Models
     public class CalendarProviderAccount
     {
         /// <summary>
+        /// The unique ID of the account given locally by the app.
+        /// </summary>
+        public string ID { get; set; }
+        /// <summary>
         /// The calnedar service providers.
         /// </summary>
         public CalendarProvider Provider { get; set; }

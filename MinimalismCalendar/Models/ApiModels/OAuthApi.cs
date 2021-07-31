@@ -33,7 +33,7 @@ namespace MinimalismCalendar.Models.ApiModels
         /// <summary>
         /// A cache of the token data for the API.
         /// </summary>
-        private OAuthToken tokenData { get; set; }
+        protected OAuthToken tokenData { get; set; }
 
         /// <summary>
         /// Returns whether the token exists and has expired, or exists but is missing an expiration limit.
@@ -307,6 +307,21 @@ namespace MinimalismCalendar.Models.ApiModels
                 StorageFile tokenFile = await ApplicationData.Current.LocalFolder.CreateFileAsync(tokenFileName, CreationCollisionOption.ReplaceExisting);
                 await FileIO.WriteTextAsync(tokenFile, tokenJsonString);
             }
+        }
+
+        /// <summary>
+        /// Removes the authorization data for the current API connection.
+        /// </summary>
+        /// <param name="tokenFileName">The name of the token file to delete.</param>
+        /// <returns></returns>
+        protected async Task RemoveConnectionDataAsync(string tokenFileName)
+        {
+            // Clear the cached token data in memory.
+            this.tokenData = null;
+
+            // Clear the saved token data from storage.
+            StorageFile tokenFile = await ApplicationData.Current.LocalFolder.GetFileAsync(tokenFileName);
+            await tokenFile.DeleteAsync(StorageDeleteOption.PermanentDelete);
         }
         #endregion
 

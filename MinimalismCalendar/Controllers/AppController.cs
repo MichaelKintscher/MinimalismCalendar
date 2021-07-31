@@ -104,6 +104,18 @@ namespace MinimalismCalendar.Controllers
                 // Update the Google API status.
                 settingsPage.GoogleAuthStatus = GoogleCalendarAPI.Instance.IsAuthorized ? "Good to go!" : "Please reconnect.";
 
+                // Add the account to the list on the page.
+                CalendarProviderAccount account = new CalendarProviderAccount()
+                {
+                    ID = Guid.NewGuid().ToString(),
+                    Provider = CalendarProvider.Google,
+                    NickName = "Test Account",
+                    UserName = "Test User Name",
+                    Connected = true,
+                    LastSynced = DateTime.Now
+                };
+                settingsPage.Accounts.Add(account);
+
                 // Refresh the calendars list.
                 this.RefreshSettinsPageCalendarList(settingsPage);
             }
@@ -176,9 +188,8 @@ namespace MinimalismCalendar.Controllers
             }
             else if (e.PageNavigatedFrom is SettingsPage settingsPageFrom)
             {
-                settingsPageFrom.ConnectServiceRequested -= this.SettingsPage_ConnectServiceRequested;
+                settingsPageFrom.ChangeAccountConnectionRequested -= this.SettingsPage_ChangeAccountConnectionRequested;
                 settingsPageFrom.OauthCodeAcquired -= this.SettingsPage_OauthCodeAcquired;
-                settingsPageFrom.RetryOauthRequested -= this.SettingsPage_ConnectServiceRequested;
                 settingsPageFrom.CalendarVisibilityChanged -= this.SettingsPage_CalendarVisibilityChanged;
                 fromPageName = "Settings Page";
             }
@@ -190,17 +201,35 @@ namespace MinimalismCalendar.Controllers
         }
 
         /// <summary>
-        /// Handles when the user requests to connect a service.S
+        /// Handles when the user requests to change a connection to a service.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void SettingsPage_ConnectServiceRequested(object sender, ConnectServiceRequestedEventArgs e)
+        private void SettingsPage_ChangeAccountConnectionRequested(object sender, ChangeAccountConnectionRequestedEventArgs e)
         {
-            this.ConnectGoogleCalendarAsync();
-
             if (sender is SettingsPage settingsPage)
             {
-                settingsPage.ShowServiceOAuthCodeUIAsync(e.ServiceName);
+                switch (e.Action)
+                {
+                    // A request was issued to connect to the service.
+                    case ConnectionAction.Connect:
+                        GoogleCalendarAPI.Instance.StartOAuthAsync();
+                        settingsPage.ShowServiceOAuthCodeUIAsync(e.ServiceName);
+                        break;
+
+                    // A request was issued to retry connecting to the service.
+                    case ConnectionAction.RetryConnect:
+                        GoogleCalendarAPI.Instance.StartOAuthAsync();
+                        settingsPage.ShowServiceOAuthCodeUIAsync(e.ServiceName);
+                        break;
+
+                    // A request was issued to disconnect the service.
+                    case ConnectionAction.Disconnect:
+                        this.DisconnectAccountAsync(settingsPage);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 
@@ -240,11 +269,11 @@ namespace MinimalismCalendar.Controllers
             {
                 case CalendarVisibility.Visible:
                     // The calendar was set to visible, so remove it from the hidden calendars list.
-                    AppConfig.Instance.RemoveFromHiddenCalendars(e.CalendarName);
+                    AppConfig.Instance.RemoveHiddenCalendar(e.CalendarName);
                     break;
                 case CalendarVisibility.Hidden:
                     // The calendar was set to hidden, so add it to the hidden calendars list.
-                    AppConfig.Instance.AddToHiddenCalendars(e.CalendarName);
+                    AppConfig.Instance.AddHiddenCalendar(e.CalendarName);
                     break;
                 default:
                     break;
@@ -334,9 +363,8 @@ namespace MinimalismCalendar.Controllers
         private async Task InitializeSettingsPageAsync(SettingsPage settingsPage)
         {
             // Subscribe to the new page's events.
-            settingsPage.ConnectServiceRequested += this.SettingsPage_ConnectServiceRequested;
+            settingsPage.ChangeAccountConnectionRequested += this.SettingsPage_ChangeAccountConnectionRequested;
             settingsPage.OauthCodeAcquired += this.SettingsPage_OauthCodeAcquired;
-            settingsPage.RetryOauthRequested += this.SettingsPage_ConnectServiceRequested;
             settingsPage.CalendarVisibilityChanged += this.SettingsPage_CalendarVisibilityChanged;
 
             // Update the Google API status.
@@ -344,6 +372,18 @@ namespace MinimalismCalendar.Controllers
 
             if (GoogleCalendarAPI.Instance.IsAuthorized)
             {
+                // Add the account to the list on the page.
+                CalendarProviderAccount account = new CalendarProviderAccount()
+                {
+                    ID = Guid.NewGuid().ToString(),
+                    Provider = CalendarProvider.Google,
+                    NickName = "Test Account",
+                    UserName = "Test User Name",
+                    Connected = true,
+                    LastSynced = DateTime.Now
+                };
+                settingsPage.Accounts.Add(account);
+
                 // Refresh the calendars list.
                 await this.RefreshSettinsPageCalendarList(settingsPage);
             }
@@ -443,12 +483,23 @@ namespace MinimalismCalendar.Controllers
         }
 
         /// <summary>
-        /// Starts an OAuth flow to connect to the Google Calendar API.
+        /// Disconnects an account.
         /// </summary>
+        /// <param name="settingsPage">The settings page instance to update with the disconnected account.</param>
         /// <returns></returns>
-        private async Task ConnectGoogleCalendarAsync()
+        private async Task DisconnectAccountAsync(SettingsPage settingsPage)
         {
-            await GoogleCalendarAPI.Instance.StartOAuthAsync();
+            // Remove the account's connection with Google.
+            await GoogleCalendarAPI.Instance.RemoveAccount();
+
+            // Remove any hidden calendars tied to the account.
+            AppConfig.Instance.ClearCalendars();
+
+            // Refresh the calendar lists on the settings page.
+            await this.RefreshSettinsPageCalendarList(settingsPage);
+
+            // Remove the account from the settings page.
+            settingsPage.Accounts.RemoveAt(0);
         }
         #endregion
     }

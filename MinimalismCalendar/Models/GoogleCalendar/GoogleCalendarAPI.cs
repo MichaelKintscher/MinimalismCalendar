@@ -37,7 +37,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// <summary>
         /// The scopes within the API the app is accessing.
         /// </summary>
-        private static readonly string[] scopes = { CalendarService.Scope.CalendarReadonly };
+        private static readonly string[] scopes = { CalendarService.Scope.CalendarReadonly, "https://www.googleapis.com/auth/userinfo.profile" };
         /// <summary>
         /// The name of the application to present to the API.
         /// </summary>
@@ -55,6 +55,10 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// The endpoint uri for exchanging the authorization code for an access token.
         /// </summary>
         private static readonly string oauthTokenEndpoint = "https://oauth2.googleapis.com/token";
+        /// <summary>
+        /// The endpoint uri for revoking an authorized token.
+        /// </summary>
+        private static readonly string oauthRevokeTokenEndpoint = "https://oauth2.googleapis.com/revoke";
         #endregion
 
         #region Properties
@@ -98,6 +102,12 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// <returns>A list of calendars</returns>
         public async Task<List<Calendar>> GetCalendarsAsync()
         {
+            // An unauthorized account cannot be accessed.
+            if (this.IsAuthorized == false)
+            {
+                return new List<Calendar>();
+            }
+
             string uri = "https://www.googleapis.com/calendar/v3/users/me/calendarList";
 
             // Make a GET request to the calendar list endpoint.
@@ -121,6 +131,29 @@ namespace MinimalismCalendar.Models.GoogleCalendar
 
             // Convert the response content to a list of events.
             return this.GetEventsFromResponse(responseContent);
+        }
+
+        /// <summary>
+        /// Removes the account by revoking the API access token and deleting any local token data.
+        /// </summary>
+        /// <returns></returns>
+        public async Task RemoveAccount()
+        {
+            // An unauthorized account cannot be removed.
+            if (this.IsAuthorized == false)
+            {
+                return;
+            }
+
+            // Post a request to the token revocation endpoint.
+            List<KeyValuePair<string, string>> args = new List<KeyValuePair<string, string>>()
+            {
+                new KeyValuePair<string, string>("token", this.tokenData.AccessToken)
+            };
+            await this.PostAsync(GoogleCalendarAPI.oauthRevokeTokenEndpoint, args);
+
+            // Remove the stored credential file.
+            await this.RemoveConnectionDataAsync(this.TokenFileName);
         }
         #endregion
 

@@ -130,11 +130,10 @@
     <Compile Include="EventArguments\ApiAuthorizedEventArgs.cs" />
     <Compile Include="EventArguments\ApiInitializedEventArgs.cs" />
     <Compile Include="EventArguments\CalendarVisibilityChangedEventArgs.cs" />
-    <Compile Include="EventArguments\ConnectServiceRequestedEventArgs.cs" />
+    <Compile Include="EventArguments\ChangeAccountConnectionRequestedEventArgs.cs" />
     <Compile Include="EventArguments\NavigatedEventArgs.cs" />
     <Compile Include="EventArguments\NavigationRequestedEventArgs.cs" />
     <Compile Include="EventArguments\OauthCodeAcquiredEventArgs.cs" />
-    <Compile Include="EventArguments\RetryOauthRequestedEventArgs.cs" />
     <Compile Include="Exceptions\ApiNotAuthorizedException.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
