@@ -24,7 +24,7 @@
         </Style>
     </Page.Resources>
 
-    <Grid>
+    <Grid Padding="10">
         <!-- The content dialog for authentication errors. -->
         <ContentDialog x:Name="OauthErrorDialog"
                        PrimaryButtonText="Try Again"
@@ -57,50 +57,78 @@
             </StackPanel>
             <StackPanel>
                 <TextBlock Style="{StaticResource HeaderTextBlockStyle}"
-                           Text="Google Account"></TextBlock>
+                           Text="Accounts"></TextBlock>
+                
+                <!-- Accounts List -->
                 <ListView x:Name="AccountsListView"
                           ItemsSource="{x:Bind Accounts, Mode=OneWay}"
                           SelectionMode="None">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
+                        </Style>
+                    </ListView.ItemContainerStyle>
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="models:CalendarProviderAccount">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Grid.Column="0"
+                                           VerticalAlignment="Center"
+                                           Padding="10"
                                            Text="{x:Bind NickName}"></TextBlock>
-                                <StackPanel Grid.Column="1"
+                                <PersonPicture Grid.Column="1"
+                                               VerticalAlignment="Center"
+                                               MaxWidth="50"
+                                               ProfilePicture="{x:Bind PictureUri}"
+                                               DisplayName="{x:Bind UserName}"></PersonPicture>
+                                <TextBlock Grid.Column="2"
+                                           VerticalAlignment="Center"
+                                           Padding="10"
+                                           Text="{x:Bind UserName}"></TextBlock>
+                                <TextBlock Grid.Column="3"
+                                           VerticalAlignment="Center"
+                                           Padding="10"
+                                           Text="{x:Bind Provider}"></TextBlock>
+                                <StackPanel Grid.Column="4"
+                                            VerticalAlignment="Center"
+                                            Padding="10"
                                             Orientation="Horizontal"
                                             Visibility="{x:Bind Connected, Converter={StaticResource TrueToVisibleConverter}}">
                                     <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
                                               Glyph="&#xF386;"></FontIcon>
                                     <TextBlock Text="Connected"></TextBlock>
                                 </StackPanel>
-                                <StackPanel Grid.Column="1"
+                                <StackPanel Grid.Column="4"
+                                            VerticalAlignment="Center"
+                                            Padding="10"
                                             Orientation="Horizontal"
                                             Visibility="{x:Bind Connected, Converter={StaticResource FalseToVisibleConverter}}">
                                     <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
                                               Glyph="&#xE871;"></FontIcon>
                                     <TextBlock Text="Connection Error"></TextBlock>
                                 </StackPanel>
-                                <TextBlock Grid.Column="2"
-                                           Text="{x:Bind UserName}"></TextBlock>
-                                <TextBlock Grid.Column="3"
-                                           Text="{x:Bind Provider}"></TextBlock>
-                                <Button Grid.Column="4"
+                                <TextBlock Grid.Column="5"
+                                           VerticalAlignment="Center"
+                                           Padding="10"
+                                           Text="{x:Bind LastSynced}"></TextBlock>
+                                <Button Grid.Column="6"
+                                        VerticalAlignment="Center"
+                                        Padding="10"
+                                        HorizontalAlignment="Center"
                                         Tag="{x:Bind ID}"
                                         Click="RemoveAccountButton_Click">
                                     <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
                                               Glyph="&#xE107;"></FontIcon>
                                 </Button>
-                                <TextBlock Grid.Column="5"
-                                           Text="{x:Bind LastSynced}"></TextBlock>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>

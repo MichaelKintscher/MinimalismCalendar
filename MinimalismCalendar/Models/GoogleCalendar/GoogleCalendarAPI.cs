@@ -37,7 +37,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// <summary>
         /// The scopes within the API the app is accessing.
         /// </summary>
-        private static readonly string[] scopes = { CalendarService.Scope.CalendarReadonly, "https://www.googleapis.com/auth/userinfo.profile" };
+        private static readonly string[] scopes = { CalendarService.Scope.CalendarReadonly, "email", "profile" };
         /// <summary>
         /// The name of the application to present to the API.
         /// </summary>
@@ -131,6 +131,39 @@ namespace MinimalismCalendar.Models.GoogleCalendar
 
             // Convert the response content to a list of events.
             return this.GetEventsFromResponse(responseContent);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public async Task<CalendarProviderAccount> GetAccountAsync()
+        {
+            // The endpoint for getting Google account info.
+            string uri = "https://www.googleapis.com/oauth2/v3/userinfo";
+
+            // Get and parse the content.
+            string content = await this.GetAsync(uri);
+            JsonObject accountJson = JsonObject.Parse(content);
+            string providerId = accountJson["sub"].GetString();
+            string userName = accountJson["email"].GetString();
+            string pictureUri = accountJson["picture"].GetString();
+
+            // Create the account object.
+            CalendarProviderAccount account = new CalendarProviderAccount()
+            {
+                ID = Guid.NewGuid().ToString(),
+                Provider = CalendarProvider.Google,
+                ProviderGivenID = providerId,
+                NickName = "Test Account",
+                UserName = userName,
+                PictureUri = pictureUri,
+                PictureLocalUri = "",
+                Connected = true,
+                LastSynced = DateTime.Now
+            };
+
+            return account;
         }
 
         /// <summary>

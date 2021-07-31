@@ -104,17 +104,8 @@ namespace MinimalismCalendar.Controllers
                 // Update the Google API status.
                 settingsPage.GoogleAuthStatus = GoogleCalendarAPI.Instance.IsAuthorized ? "Good to go!" : "Please reconnect.";
 
-                // Add the account to the list on the page.
-                CalendarProviderAccount account = new CalendarProviderAccount()
-                {
-                    ID = Guid.NewGuid().ToString(),
-                    Provider = CalendarProvider.Google,
-                    NickName = "Test Account",
-                    UserName = "Test User Name",
-                    Connected = true,
-                    LastSynced = DateTime.Now
-                };
-                settingsPage.Accounts.Add(account);
+                // Add the account to the page.
+                this.AddAccountAsync(settingsPage);
 
                 // Refresh the calendars list.
                 this.RefreshSettinsPageCalendarList(settingsPage);
@@ -372,17 +363,8 @@ namespace MinimalismCalendar.Controllers
 
             if (GoogleCalendarAPI.Instance.IsAuthorized)
             {
-                // Add the account to the list on the page.
-                CalendarProviderAccount account = new CalendarProviderAccount()
-                {
-                    ID = Guid.NewGuid().ToString(),
-                    Provider = CalendarProvider.Google,
-                    NickName = "Test Account",
-                    UserName = "Test User Name",
-                    Connected = true,
-                    LastSynced = DateTime.Now
-                };
-                settingsPage.Accounts.Add(account);
+                // Add the account to the page.
+                this.AddAccountAsync(settingsPage);
 
                 // Refresh the calendars list.
                 await this.RefreshSettinsPageCalendarList(settingsPage);
@@ -433,6 +415,18 @@ namespace MinimalismCalendar.Controllers
             // Add the calendars to their appropriate lists.
             settingsPage.AddCalendars(visibleCalendars, CalendarVisibility.Visible);
             settingsPage.AddCalendars(hiddenCalendars, CalendarVisibility.Hidden);
+        }
+
+        /// <summary>
+        /// Adds a new account to the given settings page.
+        /// </summary>
+        /// <param name="settingsPage">The settings page instance to add the new account to.</param>
+        /// <returns></returns>
+        private async Task AddAccountAsync(SettingsPage settingsPage)
+        {
+            // Get the account and add it to the list on the page.
+            CalendarProviderAccount account = await GoogleCalendarAPI.Instance.GetAccountAsync();
+            settingsPage.Accounts.Add(account);
         }
 
         /// <summary>
