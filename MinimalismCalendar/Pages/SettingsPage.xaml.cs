@@ -1,6 +1,7 @@
 ﻿using MinimalismCalendar.EventArguments;
 using MinimalismCalendar.Managers;
 using MinimalismCalendar.Models;
+using MinimalismCalendar.Models.AppConfigModels;
 using MinimalismCalendar.Utility;
 using System;
 using System.Collections.Generic;
@@ -32,20 +33,6 @@ namespace MinimalismCalendar.Pages
     public sealed partial class SettingsPage : Page, INotifyPropertyChanged
     {
         #region Properties
-        private string googleAuthStatus;
-        /// <summary>
-        /// The connection status for the Google calendar API.
-        /// </summary>
-        public string GoogleAuthStatus
-        {
-            get => this.googleAuthStatus;
-            set
-            {
-                this.googleAuthStatus = value;
-                this.RaisePropertyChanged("GoogleAuthStatus");
-            }
-        }
-
         private bool internetConnectionAvailable;
         /// <summary>
         /// Whether an internet connection is currently available.
@@ -92,23 +79,35 @@ namespace MinimalismCalendar.Pages
         /// Raised when the a request is issued to change the connection to a service.
         /// </summary>
         public event ChangeAccountConnectionRequestedHandler ChangeAccountConnectionRequested;
-        private void RaiseChangeAccountConnectionRequested(string serviceName, ConnectionAction action)
+        private void RaiseChangeAccountConnectionRequested(string accountId, CalendarProvider calendarProvider, ConnectionAction action)
         {
             // Create the args and call the listening event handlers, if there are any.
-            ChangeAccountConnectionRequestedEventArgs args = new ChangeAccountConnectionRequestedEventArgs(serviceName, action);
+            ChangeAccountConnectionRequestedEventArgs args = new ChangeAccountConnectionRequestedEventArgs(accountId, calendarProvider, action);
             this.ChangeAccountConnectionRequested?.Invoke(this, args);
         }
 
-        public delegate void OauthCodeAcquiredHandler(object sender, OauthCodeAcquiredEventArgs e);
+        public delegate void OauthCodeAcquiredHandler(object sender, OAuthFlowContinueEventArgs e);
         /// <summary>
         /// Raised when the a request is issued to connect a service.
         /// </summary>
         public event OauthCodeAcquiredHandler OauthCodeAcquired;
-        private void RaiseOauthCodeAcquired(string serviceName, string code)
+        private void RaiseOauthCodeAcquired(CalendarProvider calendarProvider, string code)
         {
             // Create the args and call the listening event handlers, if there are any.
-            OauthCodeAcquiredEventArgs args = new OauthCodeAcquiredEventArgs(serviceName, code);
+            OAuthFlowContinueEventArgs args = new OAuthFlowContinueEventArgs(calendarProvider, code);
             this.OauthCodeAcquired?.Invoke(this, args);
+        }
+
+        public delegate void ConnectionRequestCancelledHandler(object sender, OAuthFlowContinueEventArgs e);
+        /// <summary>
+        /// Raised when the current request issued to connect a service is cancelled.
+        /// </summary>
+        public event ConnectionRequestCancelledHandler ConnectionRequestCancelled;
+        private void RaiseConnectionRequestCancelled(CalendarProvider calendarProvider)
+        {
+            // Create the args and call the listening event handlers, if there are any.
+            OAuthFlowContinueEventArgs args = new OAuthFlowContinueEventArgs(calendarProvider, null);
+            this.ConnectionRequestCancelled?.Invoke(this, args);
         }
 
         public delegate void CalendarVisibilityChangedHandler(object sender, CalendarVisibilityChangedEventArgs e);
@@ -116,10 +115,10 @@ namespace MinimalismCalendar.Pages
         /// Raised when a calendar's visibility changed.
         /// </summary>
         public event CalendarVisibilityChangedHandler CalendarVisibilityChanged;
-        private void RaiseCalendarVisibilityChanged(string calendarName, CalendarVisibility newVisibility)
+        private void RaiseCalendarVisibilityChanged(Calendar calendar, CalendarVisibility newVisibility)
         {
             // Create the args and call the listening event handlers, if there are any.
-            CalendarVisibilityChangedEventArgs args = new CalendarVisibilityChangedEventArgs(calendarName, newVisibility);
+            CalendarVisibilityChangedEventArgs args = new CalendarVisibilityChangedEventArgs(calendar, newVisibility);
             this.CalendarVisibilityChanged?.Invoke(this, args);
         }
         #endregion
@@ -142,7 +141,7 @@ namespace MinimalismCalendar.Pages
         /// <param name="e"></param>
         private void AuthenticateGoogleButton_Click(object sender, RoutedEventArgs e)
         {
-            this.RaiseChangeAccountConnectionRequested("Google", ConnectionAction.Connect);
+            this.RaiseChangeAccountConnectionRequested(null, CalendarProvider.Google, ConnectionAction.Connect);
         }
 
         /// <summary>
@@ -156,7 +155,7 @@ namespace MinimalismCalendar.Pages
             {
                 // Get the acount ID and then raise the RaiseChangeAccountConnectionRequested event.
                 string accountId = button.Tag.ToString();
-                this.RaiseChangeAccountConnectionRequested("Google", ConnectionAction.Disconnect);
+                this.RaiseChangeAccountConnectionRequested(accountId, CalendarProvider.Google, ConnectionAction.Disconnect);
             }
         }
 
@@ -259,7 +258,7 @@ namespace MinimalismCalendar.Pages
 
                     // Raise the calendar visibility changed event.
                     CalendarVisibility newVisibility = (target.Name == "HiddenCalendarsListView") ? CalendarVisibility.Hidden : CalendarVisibility.Visible;
-                    this.RaiseCalendarVisibilityChanged(calendar.Name, newVisibility);
+                    this.RaiseCalendarVisibilityChanged(calendar, newVisibility);
                 }
 
                 // Complete the deferral.
@@ -283,14 +282,16 @@ namespace MinimalismCalendar.Pages
             switch (result)
             {
                 case ContentDialogResult.None:
-                    // Nothing to do... just close the dialog.
+                    // Close the dialog and raise the connection request cancelled event.
+                    this.RaiseConnectionRequestCancelled(CalendarProvider.Google);
                     break;
                 case ContentDialogResult.Primary:
                     // Raise the code acquired event.
-                    this.RaiseOauthCodeAcquired(serviceName, this.ServiceOauthCodeTextBox.Text);
+                    this.RaiseOauthCodeAcquired(CalendarProvider.Google, this.ServiceOauthCodeTextBox.Text);
                     break;
                 case ContentDialogResult.Secondary:
-                    // Nothing to do... just close the dialog.
+                    // Close the dialog and raise the connection request cancelled event.
+                    this.RaiseConnectionRequestCancelled(CalendarProvider.Google);
                     break;
                 default:
                     break;
@@ -300,10 +301,9 @@ namespace MinimalismCalendar.Pages
         /// <summary>
         /// Shows the error UI.
         /// </summary>
-        /// <param name="serviceName">The name of the service attempting to be authenticated.</param>
         /// <param name="errorMessage">The error message to display.</param>
         /// <returns></returns>
-        public async Task ShowOAuthErrorUIAsync(string serviceName, string errorMessage)
+        public async Task ShowOAuthErrorUIAsync(string errorMessage)
         {
             // Set the error message.
             this.OAuthErrorTextBlock.Text = errorMessage;
@@ -317,7 +317,7 @@ namespace MinimalismCalendar.Pages
                     break;
                 case ContentDialogResult.Primary:
                     // Raise the RaiseChangeAccountConnectionRequested event to an retry connecting.
-                    this.RaiseChangeAccountConnectionRequested(serviceName, ConnectionAction.RetryConnect);
+                    this.RaiseChangeAccountConnectionRequested(null, CalendarProvider.Google, ConnectionAction.RetryConnect);
                     break;
                 case ContentDialogResult.Secondary:
                     // Nothing to do... just close the dialog.

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MinimalismCalendar.Models
+namespace MinimalismCalendar.Models.AppConfigModels
 {
     /// <summary>
     /// Represents an account with a calendar service provider.
@@ -29,12 +29,12 @@ namespace MinimalismCalendar.Models
         /// <summary>
         /// The name for the account given by the user. Must be unique.
         /// </summary>
-        public string NickName { get; set; }
+        public string FriendlyName { get; set; }
 
         /// <summary>
         /// The username for the account with the calendar service provider.
         /// </summary>
-        public string UserName { get; set; }
+        public string Username { get; set; }
 
         /// <summary>
         /// The uri for the profile picture online.

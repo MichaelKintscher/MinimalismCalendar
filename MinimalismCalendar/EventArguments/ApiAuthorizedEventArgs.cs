@@ -15,11 +15,16 @@ namespace MinimalismCalendar.EventArguments
         /// Whether the Api was successfully authorized.
         /// </summary>
         public bool AuthorizationSuccess { get; private set; }
+        /// <summary>
+        /// The ID of the account that was authorized.
+        /// </summary>
+        public string AccountID { get; private set; }
 
-        public ApiAuthorizedEventArgs(string apiName, bool authorizationSuccess)
+        public ApiAuthorizedEventArgs(string apiName, string accountId, bool authorizationSuccess)
             : base(apiName)
         {
             this.AuthorizationSuccess = authorizationSuccess;
+            this.AccountID = accountId;
         }
     }
 }

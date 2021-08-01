@@ -133,7 +133,7 @@
     <Compile Include="EventArguments\ChangeAccountConnectionRequestedEventArgs.cs" />
     <Compile Include="EventArguments\NavigatedEventArgs.cs" />
     <Compile Include="EventArguments\NavigationRequestedEventArgs.cs" />
-    <Compile Include="EventArguments\OauthCodeAcquiredEventArgs.cs" />
+    <Compile Include="EventArguments\OAuthFlowContinueEventArgs.cs" />
     <Compile Include="Exceptions\ApiNotAuthorizedException.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
@@ -150,7 +150,7 @@
     <Compile Include="Models\AppConfigModels\HiddenCalendarRecord.cs" />
     <Compile Include="Models\Calendar.cs" />
     <Compile Include="Models\CalendarEvent.cs" />
-    <Compile Include="Models\CalendarProviderAccount.cs" />
+    <Compile Include="Models\AppConfigModels\CalendarProviderAccount.cs" />
     <Compile Include="Models\GoogleCalendar\GoogleCalendarAPI.cs" />
     <Compile Include="Models\TestDataGenerator.cs" />
     <Compile Include="Pages\HomePage.xaml.cs">

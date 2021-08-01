@@ -9,6 +9,7 @@ using MinimalismCalendar.Controllers;
 using MinimalismCalendar.EventArguments;
 using MinimalismCalendar.Exceptions;
 using MinimalismCalendar.Models.ApiModels;
+using MinimalismCalendar.Models.AppConfigModels;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -73,9 +74,9 @@ namespace MinimalismCalendar.Models.GoogleCalendar
 
         #region Constructors
         public GoogleCalendarAPI()
-            : base(GoogleCalendarAPI.oauthBaseUri, GoogleCalendarAPI.oauthTokenEndpoint, GoogleCalendarAPI.oauthRedirectUri, GoogleCalendarAPI.credentialsFilePath,
+            : base(GoogleCalendarAPI.oauthBaseUri, GoogleCalendarAPI.oauthTokenEndpoint, GoogleCalendarAPI.oauthRedirectUri,
                         GoogleCalendarAPI.LoadApiCredentials, GoogleCalendarAPI.GetOAuthQueryString, GoogleCalendarAPI.GetTokenExchangeParams,
-                        GoogleCalendarAPI.ConvertResponseToToken, GoogleCalendarAPI.GetTokenRefreshParams, GoogleCalendarAPI.ConvertTokenToJsonString)
+                        GoogleCalendarAPI.ConvertResponseToToken, GoogleCalendarAPI.GetTokenRefreshParams)
         {
             // Initalize API properties.
             this.Name = "Google Calendar";
@@ -99,11 +100,12 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// Gets a list of calendars for the authorized user.
         /// See: https://developers.google.com/calendar/api/v3/reference/calendars
         /// </summary>
+        /// <param name="accountId">The ID for the account assigned by the app.</param>
         /// <returns>A list of calendars</returns>
-        public async Task<List<Calendar>> GetCalendarsAsync()
+        public async Task<List<Calendar>> GetCalendarsAsync(string accountId)
         {
             // An unauthorized account cannot be accessed.
-            if (this.IsAuthorized == false)
+            if (!this.IsAuthorized(accountId))
             {
                 return new List<Calendar>();
             }
@@ -111,39 +113,49 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             string uri = "https://www.googleapis.com/calendar/v3/users/me/calendarList";
 
             // Make a GET request to the calendar list endpoint.
-            string calendarListResponseContent = await this.GetAsync(uri);
+            string calendarListResponseContent = await this.GetAsync(accountId, uri);
 
             // Convert the response content to a list of calendars.
-            return this.GetCalendarsFromCalendarListResponse(calendarListResponseContent);
+            List <Calendar> calendars = this.GetCalendarsFromCalendarListResponse(calendarListResponseContent);
+
+            // Add the account ID to the calendar models.
+            foreach (Calendar calendar in calendars)
+            {
+                calendar.AccountID = accountId;
+            }
+
+            return calendars;
         }
 
         /// <summary>
         /// Gets a list of events on the authorized user's primary calendar.
         /// See: https://developers.google.com/calendar/api/v3/reference/events/list
         /// </summary>
+        /// <param name="accountId">The ID for the account assigned by the app.</param>
         /// <returns>A list of calendar events</returns>
-        public async Task<List<CalendarEvent>> GetCalendarEventsAsync()
+        public async Task<List<CalendarEvent>> GetCalendarEventsAsync(string accountId)
         {
             string uri = "https://www.googleapis.com/calendar/v3/calendars/primary/events";
 
             // No exceptions were thrown, so parse the response message.
-            string responseContent = await this.GetAsync(uri);
+            string responseContent = await this.GetAsync(accountId, uri);
 
             // Convert the response content to a list of events.
             return this.GetEventsFromResponse(responseContent);
         }
 
         /// <summary>
-        /// 
+        /// Gets the user's Google account.
         /// </summary>
+        /// <param name="accountId">The ID for the account assigned by the app.</param>
         /// <returns></returns>
-        public async Task<CalendarProviderAccount> GetAccountAsync()
+        public async Task<CalendarProviderAccount> GetAccountAsync(string accountId)
         {
             // The endpoint for getting Google account info.
             string uri = "https://www.googleapis.com/oauth2/v3/userinfo";
 
             // Get and parse the content.
-            string content = await this.GetAsync(uri);
+            string content = await this.GetAsync(accountId, uri);
             JsonObject accountJson = JsonObject.Parse(content);
             string providerId = accountJson["sub"].GetString();
             string userName = accountJson["email"].GetString();
@@ -152,11 +164,11 @@ namespace MinimalismCalendar.Models.GoogleCalendar
             // Create the account object.
             CalendarProviderAccount account = new CalendarProviderAccount()
             {
-                ID = Guid.NewGuid().ToString(),
+                ID = accountId,
                 Provider = CalendarProvider.Google,
                 ProviderGivenID = providerId,
-                NickName = "Test Account",
-                UserName = userName,
+                FriendlyName = "Test Account",
+                Username = userName,
                 PictureUri = pictureUri,
                 PictureLocalUri = "",
                 Connected = true,
@@ -169,24 +181,19 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// <summary>
         /// Removes the account by revoking the API access token and deleting any local token data.
         /// </summary>
+        /// <param name="accountId">The ID for the account assigned by the app.</param>
         /// <returns></returns>
-        public async Task RemoveAccount()
+        public async Task RemoveAccount(string accountId)
         {
-            // An unauthorized account cannot be removed.
-            if (this.IsAuthorized == false)
-            {
-                return;
-            }
-
             // Post a request to the token revocation endpoint.
             List<KeyValuePair<string, string>> args = new List<KeyValuePair<string, string>>()
             {
-                new KeyValuePair<string, string>("token", this.tokenData.AccessToken)
+                new KeyValuePair<string, string>("token", this.GetToken(accountId))
             };
             await this.PostAsync(GoogleCalendarAPI.oauthRevokeTokenEndpoint, args);
 
             // Remove the stored credential file.
-            await this.RemoveConnectionDataAsync(this.TokenFileName);
+            await this.RemoveConnectionDataAsync(accountId, this.TokenFileName);
         }
         #endregion
 
@@ -347,7 +354,6 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         {
             // Parse the list of events from the response content.
             JsonObject responseJson = JsonObject.Parse(responseContent);
-            IJsonValue v = responseJson["items"];
             JsonArray itemsArray = responseJson["items"].GetArray();
 
             // Create an empty list of events, and parse and add each event.

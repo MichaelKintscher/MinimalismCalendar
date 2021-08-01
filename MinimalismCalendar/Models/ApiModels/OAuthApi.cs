@@ -28,25 +28,10 @@ namespace MinimalismCalendar.Models.ApiModels
 
         private string OAuthRedirectUri { get; set; }
 
-        private string CredentialsFilePath { get; set; }
-
         /// <summary>
         /// A cache of the token data for the API.
         /// </summary>
-        protected OAuthToken tokenData { get; set; }
-
-        /// <summary>
-        /// Returns whether the token exists and has expired, or exists but is missing an expiration limit.
-        /// </summary>
-        private bool TokenExpired
-        {
-            // There has to be a token data, AND EITHER
-            //      there is no expiration time OR
-            //      there is an expiration time and it has passed.
-            get => this.IsAuthorized &&
-                (this.tokenData.ExpiresInSeconds.HasValue == false ||
-                    DateTime.Compare(DateTime.UtcNow, this.tokenData.IssuedUtc.AddSeconds(this.tokenData.ExpiresInSeconds.Value)) >= 0);
-        }
+        private Dictionary <string, OAuthToken> tokenDataCollection { get; set; }
 
         private bool isInitialized;
         /// <summary>
@@ -68,22 +53,12 @@ namespace MinimalismCalendar.Models.ApiModels
             }
         }
 
-        /// <summary>
-        /// Returns whether the user has authorized the app with the API.
-        /// </summary>
-        public bool IsAuthorized
-        {
-            // The token data property contains a value if the app has previously been authorized.
-            get => this.tokenData != null;
-        }
-
         #region Delegate Functions
         private Func<ApiCredential> LoadCredentialsFromFile;
         private Func<ApiCredential, string> GetOAuthQueryString;
         private Func<string, string, ApiCredential, IList<KeyValuePair<string, string>>> GetTokenExchangeParams;
         private Func<string, OAuthToken> ConvertResponseToToken;
         private Func<string, ApiCredential, IList<KeyValuePair<string, string>>> GetTokenRefreshParams;
-        private Func<OAuthToken, string> ConvertTokenToJsonString;
         #endregion
 
         #region Events
@@ -104,20 +79,30 @@ namespace MinimalismCalendar.Models.ApiModels
         /// Raised when the API is authorized.
         /// </summary>
         public event AuthorizedHandler Authorized;
-        private void RaiseAuthorized(string apiName, bool success)
+        private void RaiseAuthorized(string apiName, string accountId, bool success)
         {
             // Create the args and call the listening event handlers, if there are any.
-            ApiAuthorizedEventArgs args = new ApiAuthorizedEventArgs(apiName, success);
+            ApiAuthorizedEventArgs args = new ApiAuthorizedEventArgs(apiName, accountId, success);
             this.Authorized?.Invoke(this, args);
         }
         #endregion
 
-        public OAuthApi(string oauthEndPoint, string oauthTokenEndpoint, string oauthRedirectUri, string credentialsFilePath,
+        /// <summary>
+        /// Constructs a new instance of the OAuthApi class.
+        /// </summary>
+        /// <param name="oauthEndPoint">The url for the OAuth 2.0 endpoint.</param>
+        /// <param name="oauthTokenEndpoint">The url for the OAuth 2.0 endpoint to exchange a code for a token.</param>
+        /// <param name="oauthRedirectUri">The redirect url for the OAuth 2.0 to redirect to on completion.</param>
+        /// <param name="loadCredentialsFromFile">The function that loads the app's API credentials.</param>
+        /// <param name="getOAuthQueryString">The function that provides the query string for the request to the OAuth 2.0 authorization endpoint.</param>
+        /// <param name="getTokenExchangeParams">The function that gets the parameters for the request to the OAuth 2.0 token exchange endpoint.</param>
+        /// <param name="convertResponseToToken">The function that parses the response from the OAuth 2.0 token exchange endpoint.</param>
+        /// <param name="getTokenRefreshParams">The function that gets the parameters for the request to the OAuth 2.0 token exchange endpoint to refresh the token.</param>
+        public OAuthApi(string oauthEndPoint, string oauthTokenEndpoint, string oauthRedirectUri,
                         Func<ApiCredential> loadCredentialsFromFile, Func<ApiCredential, string> getOAuthQueryString,
                         Func<string, string, ApiCredential, IList<KeyValuePair<string, string>>> getTokenExchangeParams,
                         Func<string, OAuthToken> convertResponseToToken,
-                        Func<string, ApiCredential, IList<KeyValuePair<string, string>>> getTokenRefreshParams,
-                        Func<OAuthToken, string> convertTokenToJsonString)
+                        Func<string, ApiCredential, IList<KeyValuePair<string, string>>> getTokenRefreshParams)
         {
             this.IsInitialized = false;
 
@@ -125,7 +110,6 @@ namespace MinimalismCalendar.Models.ApiModels
             this.OAuthEndPoint = oauthEndPoint;
             this.OAuthTokenEndpoint = oauthTokenEndpoint;
             this.OAuthRedirectUri = oauthRedirectUri;
-            this.CredentialsFilePath = credentialsFilePath;
 
             // Initialize the delegate functions.
             this.LoadCredentialsFromFile = loadCredentialsFromFile;
@@ -133,29 +117,81 @@ namespace MinimalismCalendar.Models.ApiModels
             this.GetTokenExchangeParams = getTokenExchangeParams;
             this.ConvertResponseToToken = convertResponseToToken;
             this.GetTokenRefreshParams = getTokenRefreshParams;
-            this.ConvertTokenToJsonString = convertTokenToJsonString;
         }
 
         #region Methods
+
+        /// <summary>
+        /// Gets the access token associated with the given account.
+        /// </summary>
+        /// <param name="accountId">The account ID to get the access token of.</param>
+        /// <exception cref="Exception">The given accountId has no data associated with it.</exception>
+        /// <returns></returns>
+        public string GetToken(string accountId)
+        {
+            // Verify that the account has token data associated with it.
+            if (!this.IsAuthorized(accountId))
+            {
+                throw new Exception("No data for the given account ID");
+            }
+
+            return this.tokenDataCollection[accountId].AccessToken;
+        }
+
+        /// <summary>
+        /// Returns whether the user has authorized the app with the API on the given account.
+        /// </summary>
+        /// <param name="accountId">The account ID to check the authorization on.</param>
+        /// <returns></returns>
+        public bool IsAuthorized(string accountId)
+        {
+            // The token data for the given account contains a value if the app has previously been authorized on that account.
+            return this.tokenDataCollection != null && this.tokenDataCollection.ContainsKey(accountId);
+        }
+
+        /// <summary>
+        /// Returns whether the token exists and has expired, or exists but is missing an expiration limit.
+        /// </summary>
+        /// <param name="accountId">The account ID to check the access token of.</param>
+        /// <exception cref="Exception">The given accountId has no data associated with it.</exception>
+        /// <returns></returns>
+        public bool IsTokenExpired(string accountId)
+        {
+            // Verify that the account has token data associated with it.
+            if (!this.IsAuthorized(accountId))
+            {
+                throw new Exception("No data for the given account ID");
+            }
+
+            // There has to be a token data, AND EITHER
+            //      there is no expiration time OR
+            //      there is an expiration time and it has passed.
+            return this.IsAuthorized(accountId) &&
+                (this.tokenDataCollection[accountId].ExpiresInSeconds.HasValue == false ||
+                    DateTime.Compare(DateTime.UtcNow, this.tokenDataCollection[accountId].IssuedUtc.AddSeconds(this.tokenDataCollection[accountId].ExpiresInSeconds.Value)) >= 0);
+        }
         #endregion
 
         #region Methods - OAuth Flow
         /// <summary>
         /// Starts an OAuth 2.0 authoization flow by redirecting the user to a browser to authorize the application.
         /// </summary>
-        /// <returns></returns>
-        public async Task StartOAuthAsync()
+        /// <returns>A unique ID to use to identify the authorization request.</returns>
+        public async Task<Guid> StartOAuthAsync()
         {
             ApiCredential credentials = this.LoadCredentialsFromFile();
             string oauthUri = this.OAuthEndPoint + this.GetOAuthQueryString(credentials);
             await Browser.OpenAsync(new Uri(oauthUri));
+
+            return Guid.NewGuid();
         }
 
         /// <summary>
         /// Completes the OAuth flow by exchanging the given authorization code for a token.
         /// </summary>
+        /// <param name="accountId">The account ID to check the access token of.</param>
         /// <param name="authorizationCode">The authorization code to exchange for the token.</param>
-        public async Task GetOauthTokenAsync(string authorizationCode)
+        public async Task GetOauthTokenAsync(string accountId, string authorizationCode)
         {
             System.Diagnostics.Debug.WriteLine("Getting token using code: " + authorizationCode);
 
@@ -170,7 +206,7 @@ namespace MinimalismCalendar.Models.ApiModels
                 responseContent = await this.PostAsync(this.OAuthTokenEndpoint, content);
 
                 // No exceptions were thrown, so parse the response message.
-                this.tokenData = this.ConvertResponseToToken(responseContent);
+                this.tokenDataCollection.Add(accountId, this.ConvertResponseToToken(responseContent));
             }
             catch(Exception ex)
             {
@@ -179,7 +215,7 @@ namespace MinimalismCalendar.Models.ApiModels
             }
 
             // Raise the authorized event to signal the completion of the get token.
-            this.RaiseAuthorized(this.Name, success);
+            this.RaiseAuthorized(this.Name, accountId, success);
         }
         #endregion
 
@@ -187,17 +223,25 @@ namespace MinimalismCalendar.Models.ApiModels
         /// <summary>
         /// Executes an HTTP POST to the given URI with the given parameters, adding the stored authorization headers to the request.
         /// </summary>
+        /// <param name="accountId">The account ID to check the access token of.</param>
         /// <param name="uri">The uri to make an HTTP POST to.</param>
         /// <param name="parameters">The HTTP content parameters for the POST.</param>
+        /// <exception cref="Exception">The given accountId has no data associated with it.</exception>
         /// <returns>A string containing the HTTP Response received.</returns>
-        public override async Task<string> PostAsync(string uri, IList<KeyValuePair<string, string>> parameters)
+        public async Task<string> PostAsync(string accountId, string uri, IList<KeyValuePair<string, string>> parameters)
         {
-            if (this.IsAuthorized)
+            // Verify that the account has token data associated with it.
+            if (!this.IsAuthorized(accountId))
             {
-                // Set the authorization header.
-                this.Client.DefaultRequestHeaders.Authorization =
-                    new Windows.Web.Http.Headers.HttpCredentialsHeaderValue(this.tokenData.TokenType, this.tokenData.AccessToken);
+                throw new Exception("No data for the given account ID");
             }
+
+            // Refresh the token if needed.
+            await this.RefreshTokenIfNeededAsync(accountId);
+
+            // Set the authorization header.
+            this.Client.DefaultRequestHeaders.Authorization =
+                new Windows.Web.Http.Headers.HttpCredentialsHeaderValue(this.tokenDataCollection[accountId].TokenType, this.tokenDataCollection[accountId].AccessToken);
 
             return await base.PostAsync(uri, parameters);
         }
@@ -205,19 +249,24 @@ namespace MinimalismCalendar.Models.ApiModels
         /// <summary>
         /// Executes an HTTP GET to the given URI, adding the stored authorization headers to the request.
         /// </summary>
+        /// <param name="accountId">The account ID to check the access token of.</param>
         /// <param name="uri">The uri to request an HTTP GET from.</param>
+        /// <exception cref="Exception">The given accountId has no data associated with it.</exception>
         /// <returns>A string containing the HTTP Response received.</returns>
-        public override async Task<string> GetAsync(string uri)
+        public async Task<string> GetAsync(string accountId, string uri)
         {
-            // Refresh the token if needed.
-            await this.RefreshTokenIfNeededAsync();
-
-            if (this.IsAuthorized)
+            // Verify that the account has token data associated with it.
+            if (!this.IsAuthorized(accountId))
             {
-                // Set the authorization header.
-                this.Client.DefaultRequestHeaders.Authorization =
-                    new Windows.Web.Http.Headers.HttpCredentialsHeaderValue(this.tokenData.TokenType, this.tokenData.AccessToken);
+                throw new Exception("No data for the given account ID");
             }
+
+            // Refresh the token if needed.
+            await this.RefreshTokenIfNeededAsync(accountId);
+
+            // Set the authorization header.
+            this.Client.DefaultRequestHeaders.Authorization =
+                new Windows.Web.Http.Headers.HttpCredentialsHeaderValue(this.tokenDataCollection[accountId].TokenType, this.tokenDataCollection[accountId].AccessToken);
 
             return await base.GetAsync(uri);
         }
@@ -236,12 +285,15 @@ namespace MinimalismCalendar.Models.ApiModels
             if (loaded == false)
             {
                 // The load was unsuccessful, so initialize the value to false.
-                this.tokenData = null;
+                this.tokenDataCollection = new Dictionary<string, OAuthToken>();
             }
             else
             {
-                // Refresh the token if needed.
-                await this.RefreshTokenIfNeededAsync();
+                // Refresh the tokens if needed.
+                foreach (string accountId in this.tokenDataCollection.Keys)
+                {
+                    await this.RefreshTokenIfNeededAsync(accountId);
+                }
             }
 
             // Mark initialization as complete.
@@ -281,7 +333,7 @@ namespace MinimalismCalendar.Models.ApiModels
             {
                 // NOTE: An exception is thrown if the JSON contained in the string
                 //      is ill-formed.
-                this.tokenData = this.ConvertResponseToToken(lines);
+                this.tokenDataCollection = this.DeserializeTokenData(lines);
             }
             catch (Exception ex)
             {
@@ -293,35 +345,119 @@ namespace MinimalismCalendar.Models.ApiModels
         }
 
         /// <summary>
-        /// Saves the authorization data for the current API connection to a token file
-        ///     with the given name.
+        /// Saves the authorization data for all acounts with the current API
+        /// connection to a token file with the given name.
         /// </summary>
         /// <param name="tokenFileName">The name to give the token save file.</param>
         protected async Task SaveConnectionDataAsync(string tokenFileName)
         {
             // Save the token data, if there is any.
-            if (this.tokenData != null)
+            if (this.tokenDataCollection != null)
             {
-                string tokenJsonString = this.ConvertTokenToJsonString(this.tokenData);
+                string tokenString = this.SerializeTokenData(this.tokenDataCollection);
 
                 StorageFile tokenFile = await ApplicationData.Current.LocalFolder.CreateFileAsync(tokenFileName, CreationCollisionOption.ReplaceExisting);
-                await FileIO.WriteTextAsync(tokenFile, tokenJsonString);
+                await FileIO.WriteTextAsync(tokenFile, tokenString);
             }
+        }
+
+        /// <summary>
+        /// Serializes the current token data into a JSON string.
+        /// </summary>
+        /// <param name="data">The token data collection to serialize.</param>
+        /// <returns>A serialized JSON representation of the given token data.</returns>
+        private string SerializeTokenData(Dictionary<string, OAuthToken> data)
+        {
+            // Create a JSON array for all of the accounts' token data.
+            JsonArray accountsTokenDataArray = new JsonArray();
+
+            // For each account...
+            foreach (string key in data.Keys)
+            {
+                // Create a JSON object for the account's token. and add the key.
+                JsonObject accountTokenJson = new JsonObject();
+                accountTokenJson.Add("key", JsonValue.CreateStringValue(key));
+
+                accountTokenJson.Add("access_token", JsonValue.CreateStringValue(data[key].AccessToken));
+
+                // Set the expiration time (lifespan of the token) to zero seconds if no value exists.
+                double expirationTime = data[key].ExpiresInSeconds.HasValue ? (double)data[key].ExpiresInSeconds.Value : 0.0;
+                accountTokenJson.Add("expires_in", JsonValue.CreateNumberValue(expirationTime));
+
+                accountTokenJson.Add("token_type", JsonValue.CreateStringValue(data[key].TokenType));
+                accountTokenJson.Add("scope", JsonValue.CreateStringValue(data[key].Scope));
+                accountTokenJson.Add("refresh_token", JsonValue.CreateStringValue(data[key].RefreshToken));
+                accountTokenJson.Add("issued_time", JsonValue.CreateStringValue(data[key].IssuedUtc.ToString()));
+
+                // Add the JSON object for the account's token to the JSON array.
+                accountsTokenDataArray.Add(accountTokenJson);
+            }
+
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.Add("items", accountsTokenDataArray);
+
+            return jsonObject.Stringify();
+        }
+
+        /// <summary>
+        /// Deserializes the token data from a JSON string.
+        /// </summary>
+        /// <param name="lines">The JSON string containing token data to deserialize.</param>
+        /// <returns>The token data collection deserialized from the given JSON string.</returns>
+        private Dictionary<string, OAuthToken> DeserializeTokenData(string lines)
+        {
+            // Parse the list of accounts' token data.
+            JsonObject jsonData = JsonObject.Parse(lines);
+            JsonArray itemsArray = jsonData["items"].GetArray();
+
+            // Create an empty list of token data, and parse and add each account's token data.
+            Dictionary<string, OAuthToken> accountsTokenData = new Dictionary<string, OAuthToken>();
+            foreach (var tokenDataJsonValue in itemsArray)
+            {
+                // Parse the response json content.
+                JsonObject tokenDataJson = tokenDataJsonValue.GetObject();
+                string token = tokenDataJson.ContainsKey("access_token") ? tokenDataJson["access_token"].GetString() : "";
+                long expiresInSeconds = tokenDataJson.ContainsKey("expires_in") ? (long)tokenDataJson["expires_in"].GetNumber() : 0;
+                string tokenType = tokenDataJson.ContainsKey("token_type") ? tokenDataJson["token_type"].GetString() : "";
+                string scope = tokenDataJson.ContainsKey("scope") ? tokenDataJson["scope"].GetString() : "";
+                string refreshToken = tokenDataJson.ContainsKey("refresh_token") ? tokenDataJson["refresh_token"].GetString() : "";
+
+                // If the response content contains an issued time, use that. Otherwise, default to Utc now.
+                DateTime issuedTime = tokenDataJson.ContainsKey("issued_time") ? DateTime.Parse(tokenDataJson["issued_time"].GetString()) : DateTime.UtcNow;
+
+                // Create and return a new instance of the OAuthToken class.
+                OAuthToken tokenData = new OAuthToken()
+                {
+                    AccessToken = token,
+                    TokenType = tokenType,
+                    ExpiresInSeconds = expiresInSeconds,
+                    RefreshToken = refreshToken,
+                    Scope = scope,
+                    IdToken = "",
+                    IssuedUtc = issuedTime
+                };
+
+                // Parse the key for this token data and add both to the collection.
+                string key = tokenDataJson["key"].GetString();
+                accountsTokenData.Add(key, tokenData);
+            }
+
+            return accountsTokenData;
         }
 
         /// <summary>
         /// Removes the authorization data for the current API connection.
         /// </summary>
+        /// <param name="accountId">The account ID to check the access token of.</param>
         /// <param name="tokenFileName">The name of the token file to delete.</param>
         /// <returns></returns>
-        protected async Task RemoveConnectionDataAsync(string tokenFileName)
+        protected async Task RemoveConnectionDataAsync(string accountId, string tokenFileName)
         {
             // Clear the cached token data in memory.
-            this.tokenData = null;
+            this.tokenDataCollection.Remove(accountId);
 
-            // Clear the saved token data from storage.
-            StorageFile tokenFile = await ApplicationData.Current.LocalFolder.GetFileAsync(tokenFileName);
-            await tokenFile.DeleteAsync(StorageDeleteOption.PermanentDelete);
+            // Save the updated collection.
+            await this.SaveConnectionDataAsync(tokenFileName);
         }
         #endregion
 
@@ -329,15 +465,22 @@ namespace MinimalismCalendar.Models.ApiModels
         /// <summary>
         /// Refreshes the token, if the token needs to be refreshed.
         /// </summary>
+        /// <param name="accountId">The account ID to check the access token of.</param>
+        /// <exception cref="Exception">The given accountId has no data associated with it.</exception>
         /// <returns>Whether the token was refreshed.</returns>
-        private async Task<bool> RefreshTokenIfNeededAsync()
+        private async Task<bool> RefreshTokenIfNeededAsync(string accountId)
         {
-            System.Diagnostics.Debug.WriteLine("Checking if token expired...");
+            // Verify that the account has token data associated with it.
+            if (this.tokenDataCollection == null || this.tokenDataCollection.ContainsKey(accountId) == false)
+            {
+                throw new Exception("No data for the given account ID");
+            }
+
             // Refresh the token if needed.
-            if (this.TokenExpired)
+            if (this.IsTokenExpired(accountId))
             {
                 System.Diagnostics.Debug.WriteLine("Token expired!");
-                await this.RefreshTokenAsync();
+                await this.RefreshTokenAsync(accountId);
                 return true;
             }
 
@@ -347,14 +490,20 @@ namespace MinimalismCalendar.Models.ApiModels
         /// <summary>
         /// Refreshes the access token using the refresh token.
         /// </summary>
+        /// <param name="accountId">The account ID to check the access token of.</param>
+        /// <exception cref="Exception">The given accountId has no data associated with it.</exception>
         /// <returns></returns>
-        private async Task RefreshTokenAsync()
+        private async Task RefreshTokenAsync(string accountId)
         {
-            System.Diagnostics.Debug.WriteLine("Refreshing token.");
+            // Verify that the account has token data associated with it.
+            if (this.tokenDataCollection == null || this.tokenDataCollection.ContainsKey(accountId) == false)
+            {
+                throw new Exception("No data for the given account ID");
+            }
 
             ApiCredential credentials = this.LoadCredentialsFromFile();
 
-            IList<KeyValuePair<string, string>> content = this.GetTokenRefreshParams(this.tokenData.RefreshToken, credentials);
+            IList<KeyValuePair<string, string>> content = this.GetTokenRefreshParams(this.tokenDataCollection[accountId].RefreshToken, credentials);
 
             string responseContent = await this.PostAsync(this.OAuthTokenEndpoint, content);
 
@@ -362,9 +511,9 @@ namespace MinimalismCalendar.Models.ApiModels
             OAuthToken updatedToken = this.ConvertResponseToToken(responseContent);
 
             // Update the access token and expiration.
-            this.tokenData.AccessToken = updatedToken.AccessToken;
-            this.tokenData.ExpiresInSeconds = updatedToken.ExpiresInSeconds;
-            this.tokenData.IssuedUtc = DateTime.UtcNow;
+            this.tokenDataCollection[accountId].AccessToken = updatedToken.AccessToken;
+            this.tokenDataCollection[accountId].ExpiresInSeconds = updatedToken.ExpiresInSeconds;
+            this.tokenDataCollection[accountId].IssuedUtc = DateTime.UtcNow;
 
             System.Diagnostics.Debug.WriteLine("Done refreshing token!");
         }

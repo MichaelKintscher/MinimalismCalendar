@@ -35,6 +35,8 @@ namespace MinimalismCalendar.Controllers
         /// Reference to currently displayed page.
         /// </summary>
         public Page CurrentPage { get; set; }
+
+        private Guid accountIdPendingAuthorization = Guid.Empty;
         #endregion
 
         #region Constructors
@@ -93,23 +95,7 @@ namespace MinimalismCalendar.Controllers
         /// <param name="e"></param>
         public void GoogleApi_Authorized(object sender, ApiAuthorizedEventArgs e)
         {
-            // If the home page is currently displayed, refresh the calendar.
-            if (this.RootPage.CurrentPage is HomePage homePage)
-            {
-                this.RefreshHomePageCalendarControlAsync(homePage);
-            }
-            // If the settings page is currently displayed, refresh the API status message.
-            else if (this.RootPage.CurrentPage is SettingsPage settingsPage)
-            {
-                // Update the Google API status.
-                settingsPage.GoogleAuthStatus = GoogleCalendarAPI.Instance.IsAuthorized ? "Good to go!" : "Please reconnect.";
-
-                // Add the account to the page.
-                this.AddAccountAsync(settingsPage);
-
-                // Refresh the calendars list.
-                this.RefreshSettinsPageCalendarList(settingsPage);
-            }
+            this.AddNewAccountDataAsync(e.AccountID);
         }
 
         /// <summary>
@@ -182,6 +168,7 @@ namespace MinimalismCalendar.Controllers
                 settingsPageFrom.ChangeAccountConnectionRequested -= this.SettingsPage_ChangeAccountConnectionRequested;
                 settingsPageFrom.OauthCodeAcquired -= this.SettingsPage_OauthCodeAcquired;
                 settingsPageFrom.CalendarVisibilityChanged -= this.SettingsPage_CalendarVisibilityChanged;
+                settingsPageFrom.ConnectionRequestCancelled -= this.SettingsPage_ConnectionRequestCancelled;
                 fromPageName = "Settings Page";
             }
 
@@ -204,19 +191,19 @@ namespace MinimalismCalendar.Controllers
                 {
                     // A request was issued to connect to the service.
                     case ConnectionAction.Connect:
-                        GoogleCalendarAPI.Instance.StartOAuthAsync();
-                        settingsPage.ShowServiceOAuthCodeUIAsync(e.ServiceName);
+                        this.StartOAuthAsync();
+                        settingsPage.ShowServiceOAuthCodeUIAsync(e.AccoutId);
                         break;
 
                     // A request was issued to retry connecting to the service.
                     case ConnectionAction.RetryConnect:
-                        GoogleCalendarAPI.Instance.StartOAuthAsync();
-                        settingsPage.ShowServiceOAuthCodeUIAsync(e.ServiceName);
+                        this.StartOAuthAsync();
+                        settingsPage.ShowServiceOAuthCodeUIAsync(e.AccoutId);
                         break;
 
                     // A request was issued to disconnect the service.
                     case ConnectionAction.Disconnect:
-                        this.DisconnectAccountAsync(settingsPage);
+                        this.DisconnectAccountAsync(e.AccoutId, settingsPage);
                         break;
                     default:
                         break;
@@ -229,7 +216,7 @@ namespace MinimalismCalendar.Controllers
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void SettingsPage_OauthCodeAcquired(object sender, OauthCodeAcquiredEventArgs e)
+        private void SettingsPage_OauthCodeAcquired(object sender, OAuthFlowContinueEventArgs e)
         {
             // Validate the code.
             if (String.IsNullOrWhiteSpace(e.Code))
@@ -238,14 +225,26 @@ namespace MinimalismCalendar.Controllers
                 if (sender is SettingsPage settingsPage)
                 {
                     string errorMessage = "No code was entered!";
-                    settingsPage.ShowOAuthErrorUIAsync(e.ServiceName, errorMessage);
+                    settingsPage.ShowOAuthErrorUIAsync(errorMessage);
                 }
             }
             else
             {
-                // Complete the OAuth flow.
-                GoogleCalendarAPI.Instance.GetOauthTokenAsync(e.Code);
+                // Complete the OAuth flow and clear the state data for the pending authorization.
+                GoogleCalendarAPI.Instance.GetOauthTokenAsync(this.accountIdPendingAuthorization.ToString(), e.Code);
+                this.accountIdPendingAuthorization = Guid.Empty;
             }
+        }
+
+        /// <summary>
+        /// Handles when the user cancells the pending connect account request from the settings page.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SettingsPage_ConnectionRequestCancelled(object sender, OAuthFlowContinueEventArgs e)
+        {
+            // Clear the associated state value.
+            this.accountIdPendingAuthorization = Guid.Empty;
         }
 
         /// <summary>
@@ -260,11 +259,11 @@ namespace MinimalismCalendar.Controllers
             {
                 case CalendarVisibility.Visible:
                     // The calendar was set to visible, so remove it from the hidden calendars list.
-                    AppConfig.Instance.RemoveHiddenCalendar(e.CalendarName);
+                    AppConfig.Instance.RemoveHiddenCalendar(e.Calendar);
                     break;
                 case CalendarVisibility.Hidden:
                     // The calendar was set to hidden, so add it to the hidden calendars list.
-                    AppConfig.Instance.AddHiddenCalendar(e.CalendarName);
+                    AppConfig.Instance.AddHiddenCalendar(e.Calendar);
                     break;
                 default:
                     break;
@@ -316,7 +315,7 @@ namespace MinimalismCalendar.Controllers
             await GoogleCalendarAPI.Instance.SaveConnectionDataAsync();
 
             // Save the user's app config settings.
-            await AppConfig.Instance.SaveHiddenCalendarsAsync();
+            await AppConfig.Instance.SaveAsync();
         }
         #endregion
 
@@ -340,10 +339,7 @@ namespace MinimalismCalendar.Controllers
 
             // Initialize the calendar control.
             //List<CalendarEvent> eventList = TestDataGenerator.GetTestEvents();
-            if (GoogleCalendarAPI.Instance.IsAuthorized)
-            {
-                await this.RefreshHomePageCalendarControlAsync(homePage);
-            }
+            await this.RefreshHomePageCalendarControlAsync(homePage);
             System.Diagnostics.Debug.WriteLine("Home page initialized!");
         }
 
@@ -356,19 +352,19 @@ namespace MinimalismCalendar.Controllers
             // Subscribe to the new page's events.
             settingsPage.ChangeAccountConnectionRequested += this.SettingsPage_ChangeAccountConnectionRequested;
             settingsPage.OauthCodeAcquired += this.SettingsPage_OauthCodeAcquired;
+            settingsPage.ConnectionRequestCancelled += this.SettingsPage_ConnectionRequestCancelled;
             settingsPage.CalendarVisibilityChanged += this.SettingsPage_CalendarVisibilityChanged;
 
-            // Update the Google API status.
-            settingsPage.GoogleAuthStatus = GoogleCalendarAPI.Instance.IsAuthorized ? "Good to go!" : "Please reconnect.";
-
-            if (GoogleCalendarAPI.Instance.IsAuthorized)
+            // Add the accounts logged into with this app to the page.
+            List<CalendarProviderAccount> accounts = await AppConfig.Instance.GetAccountsAsync();
+            foreach (CalendarProviderAccount account in accounts)
             {
-                // Add the account to the page.
-                this.AddAccountAsync(settingsPage);
-
-                // Refresh the calendars list.
-                await this.RefreshSettinsPageCalendarList(settingsPage);
+                // Get the account and add it to the list on the page.
+                settingsPage.Accounts.Add(account);
             }
+
+            // Refresh the calendars list.
+            await this.RefreshSettinsPageCalendarList(settingsPage);
         }
 
         /// <summary>
@@ -378,7 +374,18 @@ namespace MinimalismCalendar.Controllers
         /// <returns></returns>
         private async Task RefreshHomePageCalendarControlAsync(HomePage homePage)
         {
-            List<CalendarEvent> eventList = await GoogleCalendarAPI.Instance.GetCalendarEventsAsync();
+            // Get a list of the accounts.
+            List<CalendarProviderAccount> accounts = await AppConfig.Instance.GetAccountsAsync();
+
+            // For each account...
+            List<CalendarEvent> eventList = new List<CalendarEvent>();
+            foreach (CalendarProviderAccount account in accounts)
+            {
+                List<CalendarEvent> eventsForAccount = await GoogleCalendarAPI.Instance.GetCalendarEventsAsync(account.ID);
+                eventList.AddRange(eventsForAccount);
+            }
+
+            // Initialize the calendar control on the homepage.
             homePage.InitializeCalendarControl(DateTime.Now, eventList);
             System.Diagnostics.Debug.WriteLine("Home page calendar initialized!");
         }
@@ -393,8 +400,17 @@ namespace MinimalismCalendar.Controllers
             // Clear the available calendars list.
             settingsPage.ClearCalenderLists();
 
-            // Get an updated list of available calendars from the Google API.
-            List<Calendar> calendars = await GoogleCalendarAPI.Instance.GetCalendarsAsync();
+            // Get a list of the accounts.
+            List<CalendarProviderAccount> accounts = await AppConfig.Instance.GetAccountsAsync();
+
+            // For each account...
+            List<Calendar> calendars = new List<Calendar>();
+            foreach (CalendarProviderAccount account in accounts)
+            {
+                // Get an updated list of available calendars from the Google API.
+                List<Calendar> calendarsForAccount = await GoogleCalendarAPI.Instance.GetCalendarsAsync(account.ID);
+                calendars.AddRange(calendarsForAccount);
+            }
 
             // Get a list of the hidden calendars from the app's config settings.
             List<HiddenCalendarRecord> records = await AppConfig.Instance.GetHiddenCalendarsAsync();
@@ -418,15 +434,39 @@ namespace MinimalismCalendar.Controllers
         }
 
         /// <summary>
-        /// Adds a new account to the given settings page.
+        /// Wrapps the call to the Google Calendar API so that await can be used.
         /// </summary>
-        /// <param name="settingsPage">The settings page instance to add the new account to.</param>
         /// <returns></returns>
-        private async Task AddAccountAsync(SettingsPage settingsPage)
+        private async Task StartOAuthAsync()
         {
-            // Get the account and add it to the list on the page.
-            CalendarProviderAccount account = await GoogleCalendarAPI.Instance.GetAccountAsync();
-            settingsPage.Accounts.Add(account);
+            this.accountIdPendingAuthorization = await GoogleCalendarAPI.Instance.StartOAuthAsync();
+        }
+
+        /// <summary>
+        /// Populates the account info for the given account ID and adds that account to the app's data.
+        /// </summary>
+        /// <param name="accountId">The app-assigned ID of the account to get data for and add.</param>
+        /// <returns></returns>
+        private async Task AddNewAccountDataAsync(string accountId)
+        {
+            // Create the account model and add it to the app config.
+            CalendarProviderAccount account = await GoogleCalendarAPI.Instance.GetAccountAsync(accountId);
+            await AppConfig.Instance.AddAccountAsync(account);
+
+            // If the home page is currently displayed, refresh the calendar.
+            if (this.RootPage.CurrentPage is HomePage homePage)
+            {
+                await this.RefreshHomePageCalendarControlAsync(homePage);
+            }
+            // If the settings page is currently displayed, refresh the API status message.
+            else if (this.RootPage.CurrentPage is SettingsPage settingsPage)
+            {
+                // Add the account to the page.
+                settingsPage.Accounts.Add(account);
+
+                // Refresh the calendars list.
+                await this.RefreshSettinsPageCalendarList(settingsPage);
+            }
         }
 
         /// <summary>
@@ -479,21 +519,26 @@ namespace MinimalismCalendar.Controllers
         /// <summary>
         /// Disconnects an account.
         /// </summary>
+        /// <param name="accountId">The ID of the account to remove.</param>
         /// <param name="settingsPage">The settings page instance to update with the disconnected account.</param>
         /// <returns></returns>
-        private async Task DisconnectAccountAsync(SettingsPage settingsPage)
+        private async Task DisconnectAccountAsync(string accountId, SettingsPage settingsPage)
         {
             // Remove the account's connection with Google.
-            await GoogleCalendarAPI.Instance.RemoveAccount();
+            await GoogleCalendarAPI.Instance.RemoveAccount(accountId);
 
-            // Remove any hidden calendars tied to the account.
-            AppConfig.Instance.ClearCalendars();
+            // Remove cahced account data.
+            await AppConfig.Instance.RemoveAccountAsync(accountId);
 
             // Refresh the calendar lists on the settings page.
             await this.RefreshSettinsPageCalendarList(settingsPage);
 
             // Remove the account from the settings page.
-            settingsPage.Accounts.RemoveAt(0);
+            CalendarProviderAccount accountToRemove = settingsPage.Accounts.Where(a => a.ID == accountId).FirstOrDefault();
+            if (accountToRemove != null)
+            {
+                settingsPage.Accounts.Remove(accountToRemove);
+            }
         }
         #endregion
     }

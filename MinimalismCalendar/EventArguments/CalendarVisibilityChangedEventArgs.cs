@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MinimalismCalendar.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,17 +13,17 @@ namespace MinimalismCalendar.EventArguments
     public class CalendarVisibilityChangedEventArgs : EventArgs
     {
         /// <summary>
-        /// The name of the calendar that changed visibility.
+        /// The calendar that changed visibility.
         /// </summary>
-        public string CalendarName { get; private set; }
+        public Calendar Calendar { get; private set; }
         /// <summary>
         /// The new visibility of the calendar.
         /// </summary>
         public CalendarVisibility Visibility { get; private set; }
 
-        public CalendarVisibilityChangedEventArgs(string calendarName, CalendarVisibility newVisibility)
+        public CalendarVisibilityChangedEventArgs(Calendar calendar, CalendarVisibility newVisibility)
         {
-            this.CalendarName = calendarName;
+            this.Calendar = calendar;
             this.Visibility = newVisibility;
         }
     }

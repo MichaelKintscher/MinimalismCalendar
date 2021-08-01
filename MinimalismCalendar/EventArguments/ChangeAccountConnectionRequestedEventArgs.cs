@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MinimalismCalendar.Models.AppConfigModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,18 +13,22 @@ namespace MinimalismCalendar.EventArguments
     public class ChangeAccountConnectionRequestedEventArgs : EventArgs
     {
         /// <summary>
-        /// The name of the service requesting to be connected.
+        /// The ID of the account associated with the connection change request. Null for new account connections.
         /// </summary>
-        public string ServiceName { get; private set; }
-
+        public string AccoutId { get; private set; }
+        /// <summary>
+        /// The calendar service provider for the account.
+        /// </summary>
+        public CalendarProvider CalendarProvider { get; set; }
         /// <summary>
         /// The connection change requested.
         /// </summary>
         public ConnectionAction Action { get; private set; }
 
-        public ChangeAccountConnectionRequestedEventArgs(string serviceName, ConnectionAction action)
+        public ChangeAccountConnectionRequestedEventArgs(string accountId, CalendarProvider calendarProvider, ConnectionAction action)
         {
-            this.ServiceName = serviceName;
+            this.AccoutId = accountId;
+            this.CalendarProvider = calendarProvider;
             this.Action = action;
         }
     }

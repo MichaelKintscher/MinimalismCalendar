@@ -21,19 +21,98 @@ namespace MinimalismCalendar.Models.AppConfigModels
 
         #region Properties
         /// <summary>
+        /// The list of accounts the user has connected with the app.
+        /// </summary>
+        private List<CalendarProviderAccount> Accounts { get; set; }
+        /// <summary>
         /// The list of calendars the user has set to be hidden.
         /// </summary>
-        private List<HiddenCalendarRecord> HiddenCalendars { get; set; }
+        private Dictionary<string, List<HiddenCalendarRecord>> HiddenCalendars { get; set; }
         #endregion
 
         #region Constructors
         public AppConfig()
         {
+            this.Accounts = null;
             this.HiddenCalendars = null;
         }
         #endregion
 
-        #region Methods
+        #region Methods - Accounts
+        /// <summary>
+        /// Gets a list of accounts the user has connected with the app.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<List<CalendarProviderAccount>> GetAccountsAsync()
+        {
+            // Initialize the list if it is uninitialized.
+            if (this.Accounts == null)
+            {
+                this.Accounts = await this.InitializeAccountsAsync();
+            }
+
+            return new List<CalendarProviderAccount>(this.Accounts);
+        }
+
+        /// <summary>
+        /// Adds the given account to the list of accounts.
+        /// </summary>
+        /// <param name="account">The account to add to the list of accounts.</param>
+        /// <returns></returns>
+        public async Task AddAccountAsync(CalendarProviderAccount account)
+        {
+            // Initialize the list if it is uninitialized.
+            if (this.Accounts == null)
+            {
+                this.Accounts = await this.InitializeAccountsAsync();
+            }
+
+            this.Accounts.Add(account);
+        }
+
+        /// <summary>
+        /// Removes the account with the given ID from the list of accounts and clears any associated data.
+        /// </summary>
+        /// <param name="accountId"></param>
+        /// <returns></returns>
+        public async Task RemoveAccountAsync(string accountId)
+        {
+            // Initialize the list if it is uninitialized.
+            if (this.Accounts == null)
+            {
+                this.Accounts = await this.InitializeAccountsAsync();
+            }
+
+            CalendarProviderAccount account = this.Accounts.Where(a => a.ID == accountId).FirstOrDefault();
+            if (account != null)
+            {
+                this.Accounts.Remove(account);
+            }
+
+            // Clear any calendars associated with this account.
+            await this.RemoveCalendarsAsync(accountId);
+        }
+
+        /// <summary>
+        /// Gets the provider-assigned ID for a account, given the app-assigned account ID.
+        /// </summary>
+        /// <param name="accountId">The unique ID of the account given locally by the app.</param>
+        /// <returns></returns>
+        public async Task<string> GetProviderAccountId(string accountId)
+        {
+            // Initialize the list if it is uninitialized.
+            if (this.Accounts == null)
+            {
+                this.Accounts = await this.InitializeAccountsAsync();
+            }
+
+            CalendarProviderAccount account = this.Accounts.Where(a => a.ID == accountId).FirstOrDefault();
+
+            return account != null ? account.ProviderGivenID : "";
+        }
+        #endregion
+
+        #region Methods - Hidden Calendars
         /// <summary>
         /// Gets the list of calendars the user has set to be hidden.
         /// </summary>
@@ -46,39 +125,51 @@ namespace MinimalismCalendar.Models.AppConfigModels
                 this.HiddenCalendars = await this.InitializeHiddenCalendarsAsync();
             }
 
+            // Construct the list of all hidden calendars.
+            List<HiddenCalendarRecord> allRecords = new List<HiddenCalendarRecord>();
+            foreach (List<HiddenCalendarRecord> recordsForAccount in this.HiddenCalendars.Values)
+            {
+                allRecords.AddRange(recordsForAccount);
+            }
+
             // Return the list of hidden calendars.
-            return new List<HiddenCalendarRecord>(this.HiddenCalendars);
+            return allRecords;
         }
 
         /// <summary>
         /// Adds the given calendar to a list of hidden calendars.
         /// </summary>
-        /// <param name="name">The name of the calendar to add to the list of hidden calendars. The name should be unique among the calendar records in the list.</param>
-        public void AddHiddenCalendar(string name)
+        /// <param name="calendar">The calendar to add to the list of hidden calendars.</param>
+        public void AddHiddenCalendar(Calendar calendar)
         {
-            // Create a new calendar record and add it to the list.
-            this.HiddenCalendars.Add(new HiddenCalendarRecord()
+            if (!this.HiddenCalendars.ContainsKey(calendar.AccountID))
             {
-                CalendarName = name
+                this.HiddenCalendars.Add(calendar.AccountID, new List<HiddenCalendarRecord>());
+            }
+
+            // Create a new calendar record and add it to the list.
+            this.HiddenCalendars[calendar.AccountID].Add(new HiddenCalendarRecord()
+            {
+                CalendarName = calendar.Name
             });
         }
 
         /// <summary>
         /// Removes the given calendar from the list of hidden calendars.
         /// </summary>
-        /// <param name="name">The name of the calendar to remove from the list of hidden calendars. The name is assumed to be unique among the calendar records in the list.</param>
+        /// <param name="calendar">The calendar to remove from the list of hidden calendars.</param>
         /// <returns>True if the given calendar was removed, false otherwise.</returns>
-        public bool RemoveHiddenCalendar(string name)
+        public bool RemoveHiddenCalendar(Calendar calendar)
         {
             bool removed = false;
 
             // Try to get a reference to the record of this calendar.
-            HiddenCalendarRecord record = this.HiddenCalendars.Where(r => r.CalendarName == name).FirstOrDefault();
+            HiddenCalendarRecord record = this.HiddenCalendars[calendar.AccountID].Where(r => r.CalendarName == calendar.Name).FirstOrDefault();
 
             // If the calendar is in the list of hidden calendars, remove it.
             if (record != null)
             {
-                this.HiddenCalendars.Remove(record);
+                this.HiddenCalendars[calendar.AccountID].Remove(record);
                 removed = true;
             }
 
@@ -86,37 +177,50 @@ namespace MinimalismCalendar.Models.AppConfigModels
         }
 
         /// <summary>
-        /// Removes all calendars.
+        /// Removes all calendars for the given account.
+        /// <paramref name="accountId">The account ID to remove all calendars for.</paramref>
         /// </summary>
-        public void ClearCalendars()
+        public async Task RemoveCalendarsAsync(string accountId)
         {
-            this.HiddenCalendars.Clear();
+            // Initialize the list if it is uninitialized.
+            if (this.HiddenCalendars == null)
+            {
+                this.HiddenCalendars = await this.InitializeHiddenCalendarsAsync();
+            }
+
+            this.HiddenCalendars.Remove(accountId);
         }
 
         /// <summary>
-        /// Saves to a config file the list of calendars the user has set to be hidden.
+        /// Saves all config contents to a config file.
         /// </summary>
         /// <returns></returns>
-        public async Task SaveHiddenCalendarsAsync()
+        public async Task SaveAsync()
         {
-            // There are no hidden calendars to save.
-            if (this.HiddenCalendars == null)
+            // There are no accounts to save.
+            if (this.Accounts == null)
             {
                 return;
             }
 
-            // For each record in the list of hidden calendars...
-            JsonArray calsArray = new JsonArray();
-            foreach(HiddenCalendarRecord record in this.HiddenCalendars)
+            // For each account in the list of accounts...
+            JsonArray accountsArray = new JsonArray();
+            foreach (CalendarProviderAccount account in this.Accounts)
             {
-                // Serialize the record and add it to the array.
-                JsonObject recordJson = HiddenCalendarRecordManager.Serialize(record);
-                calsArray.Add(recordJson);
+                // Serialize the account data.
+                JsonObject accountJson = CalendarProviderAccountManager.Serialize(account);
+
+                // Add the array of calendar data to the serialized account data.
+                JsonArray calsArray = this.SerializeHiddenCalendarsForAccount(account.ID);
+                accountJson.Add("hidden_calendars", calsArray);
+
+                // Add the account to array.
+                accountsArray.Add(accountJson);
             }
 
             // Store the array in a json object.
             JsonObject jsonObject = new JsonObject();
-            jsonObject.Add("hidden_calenders", calsArray);
+            jsonObject.Add("accounts", accountsArray);
 
             // Get a reference to the file, and create it if it does not exist.
             StorageFile file = await ApplicationData.Current.LocalFolder.CreateFileAsync(AppConfig.ConfigFileName, CreationCollisionOption.ReplaceExisting);
@@ -128,13 +232,13 @@ namespace MinimalismCalendar.Models.AppConfigModels
 
         #region Helper Methods
         /// <summary>
-        /// Initializes the list of hidden calendars from the stored data.
+        /// Initializes the list of accounts the user has connected with the app from the stored data.
         /// </summary>
         /// <returns>The list of hidden calendar records, or an empty list if there is a file error.</returns>
-        private async Task<List<HiddenCalendarRecord>> InitializeHiddenCalendarsAsync()
+        private async Task<List<CalendarProviderAccount>> InitializeAccountsAsync()
         {
             // Initialize the list.
-            List<HiddenCalendarRecord> hiddenCalendars = new List<HiddenCalendarRecord>();
+            List<CalendarProviderAccount> accounts = new List<CalendarProviderAccount>();
 
             // Try to read the list from the file.
             IStorageItem storageItem = await ApplicationData.Current.LocalFolder.TryGetItemAsync(AppConfig.ConfigFileName);
@@ -145,23 +249,106 @@ namespace MinimalismCalendar.Models.AppConfigModels
 
                 // Parse the data from the file.
                 JsonObject jsonObject = JsonObject.Parse(fileContent);
-                JsonArray calsArray = jsonObject["hidden_calenders"].GetArray();
+                JsonArray accountsArray = jsonObject["accounts"].GetArray();
 
-                // For each hidden calendar record in the array...
-                foreach(var hiddenCalJsonValue in calsArray)
+                // For each account in the array...
+                foreach (var accountJsonValue in accountsArray)
                 {
                     // This is necessary because of the type iterated over in the JsonArray.
-                    JsonObject hiddenCalJson = hiddenCalJsonValue.GetObject();
+                    JsonObject accountJson = accountJsonValue.GetObject();
 
-                    // Parse the record data.
-                    HiddenCalendarRecord record = HiddenCalendarRecordManager.Deserialize(hiddenCalJson);
+                    // Parse the account data.
+                    CalendarProviderAccount account = CalendarProviderAccountManager.Deserialize(accountJson);
 
                     // Add a new hidden calendar record to the list.
-                    hiddenCalendars.Add(record);
+                    accounts.Add(account);
                 }
             }
 
-            return hiddenCalendars;
+            return accounts;
+        }
+
+        /// <summary>
+        /// Initializes the list of hidden calendars from the stored data.
+        /// </summary>
+        /// <returns>The list of hidden calendar records, or an empty list if there is a file error.</returns>
+        private async Task<Dictionary<string, List<HiddenCalendarRecord>>> InitializeHiddenCalendarsAsync()
+        {
+            // Initialize the collection.
+            Dictionary<string, List<HiddenCalendarRecord>> recordsCollection = new Dictionary<string, List<HiddenCalendarRecord>>();
+
+            // Try to read the list from the file.
+            IStorageItem storageItem = await ApplicationData.Current.LocalFolder.TryGetItemAsync(AppConfig.ConfigFileName);
+            if (storageItem is StorageFile file)
+            {
+                // Read the data from the file.
+                string fileContent = await FileIO.ReadTextAsync(file);
+
+                // Parse the data from the file.
+                JsonObject jsonObject = JsonObject.Parse(fileContent);
+                JsonArray accountsArray = jsonObject["accounts"].GetArray();
+
+                // For each account in the list of accounts...
+                foreach (var accountJsonValue in accountsArray)
+                {
+                    // Parse the account data.
+                    JsonObject accountJson = accountJsonValue.GetObject();
+                    CalendarProviderAccount account = CalendarProviderAccountManager.Deserialize(accountJson);
+
+                    // Initialize the list for this account.
+                    recordsCollection.Add(account.ID, new List<HiddenCalendarRecord>());
+
+                    // If there are no hidden calendars, move on.
+                    if (accountJson.ContainsKey("hidden_calendars") == false)
+                    {
+                        continue;
+                    }
+
+                    JsonArray calsArray = accountJson["hidden_calendars"].GetArray();
+
+                    // For each hidden calendar record in the array...
+                    foreach (var hiddenCalJsonValue in calsArray)
+                    {
+                        // This is necessary because of the type iterated over in the JsonArray.
+                        JsonObject hiddenCalJson = hiddenCalJsonValue.GetObject();
+
+                        // Parse the record data.
+                        HiddenCalendarRecord record = HiddenCalendarRecordManager.Deserialize(hiddenCalJson);
+
+                        // Add a new hidden calendar record to the list.
+                        recordsCollection[account.ID].Add(record);
+                    }
+                }
+            }
+
+            return recordsCollection;
+        }
+
+        /// <summary>
+        /// Serializes the hidden calendars for the given account into a JSON array.
+        /// </summary>
+        /// <param name="accountId">The unique ID of the account given locally by the app.</param>
+        /// <returns></returns>
+        private JsonArray SerializeHiddenCalendarsForAccount(string accountId)
+        {
+            // Return an empty array if there are no calendar records for the given account.
+            if (this.HiddenCalendars == null ||
+                this.HiddenCalendars.ContainsKey(accountId) == false ||
+                this.HiddenCalendars[accountId] == null)
+            {
+                return new JsonArray();
+            }
+
+            // For each record in the list of hidden calendars...
+            JsonArray calsArray = new JsonArray();
+            foreach (HiddenCalendarRecord record in this.HiddenCalendars[accountId])
+            {
+                // Serialize the record and add it to the array.
+                JsonObject recordJson = HiddenCalendarRecordManager.Serialize(record);
+                calsArray.Add(recordJson);
+            }
+
+            return calsArray;
         }
         #endregion
     }

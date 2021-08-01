@@ -21,8 +21,9 @@ namespace MinimalismCalendar.Managers
         public static JsonObject ConvertToJson(Calendar calendar)
         {
             JsonObject jsonObject = new JsonObject();
-            jsonObject.Add("ID", JsonValue.CreateStringValue(calendar.ID));
-            jsonObject.Add("Name", JsonValue.CreateStringValue(calendar.Name));
+            jsonObject.Add("id", JsonValue.CreateStringValue(calendar.ID));
+            jsonObject.Add("account_id", JsonValue.CreateStringValue(calendar.AccountID));
+            jsonObject.Add("name", JsonValue.CreateStringValue(calendar.Name));
 
             return jsonObject;
         }
@@ -34,12 +35,14 @@ namespace MinimalismCalendar.Managers
         public static Calendar ParseCalendarJson(string calendarJsonString)
         {
             JsonObject jsonObject = JsonObject.Parse(calendarJsonString);
-            string id = jsonObject["ID"].GetString();
-            string name = jsonObject["Name"].GetString();
+            string id = jsonObject["id"].GetString();
+            string accountId = jsonObject["account_id"].GetString();
+            string name = jsonObject["name"].GetString();
 
             return new Calendar()
             {
                 ID = id,
+                AccountID = accountId,
                 Name = name
             };
         }
@@ -53,7 +56,7 @@ namespace MinimalismCalendar.Managers
         public static bool Equals(Calendar a, Calendar b)
         {
             return a.ID == b.ID &&
-                    a.Name == b.Name;
+                    a.AccountID == b.AccountID;
         }
     }
 }
