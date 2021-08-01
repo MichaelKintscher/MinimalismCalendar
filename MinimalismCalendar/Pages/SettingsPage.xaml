@@ -82,10 +82,10 @@
                                     <ColumnDefinition Width="Auto"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0"
-                                           VerticalAlignment="Center"
-                                           Margin="10"
-                                           Text="{x:Bind FriendlyName}"></TextBlock>
+                                <TextBox Grid.Column="0"
+                                         VerticalAlignment="Center"
+                                         Margin="10"
+                                         Text="{x:Bind FriendlyName, Mode=TwoWay}"></TextBox>
                                 <PersonPicture Grid.Column="1"
                                                VerticalAlignment="Center"
                                                Margin="10"
