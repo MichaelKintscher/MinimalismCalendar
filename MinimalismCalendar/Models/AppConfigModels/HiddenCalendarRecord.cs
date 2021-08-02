@@ -12,6 +12,10 @@ namespace MinimalismCalendar.Models.AppConfigModels
     public class HiddenCalendarRecord
     {
         /// <summary>
+        /// The ID of the hidden calendar.
+        /// </summary>
+        public string CalendarID { get; set; }
+        /// <summary>
         /// The name of the hidden calendar.
         /// </summary>
         public string CalendarName { get; set; }

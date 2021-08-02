@@ -21,11 +21,13 @@ namespace MinimalismCalendar.Managers
         public static HiddenCalendarRecord Deserialize(JsonObject recordJson)
         {
             // Parse the record data.
+            string calendarId = recordJson["calendar_id"].GetString();
             string name = recordJson["name"].GetString();
 
             // Add a new hidden calendar record to the list.
             return new HiddenCalendarRecord()
             {
+                CalendarID = calendarId,
                 CalendarName = name
             };
         }
@@ -38,6 +40,7 @@ namespace MinimalismCalendar.Managers
         public static JsonObject Serialize(HiddenCalendarRecord record)
         {
             JsonObject recordJson = new JsonObject();
+            recordJson.Add("calendar_id", JsonValue.CreateStringValue(record.CalendarID));
             recordJson.Add("name", JsonValue.CreateStringValue(record.CalendarName));
 
             return recordJson;

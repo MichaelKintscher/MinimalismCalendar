@@ -134,9 +134,9 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// </summary>
         /// <param name="accountId">The ID for the account assigned by the app.</param>
         /// <returns>A list of calendar events</returns>
-        public async Task<List<CalendarEvent>> GetCalendarEventsAsync(string accountId)
+        public async Task<List<CalendarEvent>> GetCalendarEventsAsync(string accountId, string calendarId = "primary")
         {
-            string uri = "https://www.googleapis.com/calendar/v3/calendars/primary/events";
+            string uri = "https://www.googleapis.com/calendar/v3/calendars/" + calendarId + "/events";
 
             // Parse the response message.
             string responseContent = await this.GetAsync(accountId, uri);

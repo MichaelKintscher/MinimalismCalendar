@@ -136,6 +136,23 @@ namespace MinimalismCalendar.Models.AppConfigModels
             return allRecords;
         }
 
+        public async Task<bool> IsCalendarHiddenAsync(string accountId, string calendarId)
+        {
+            // Initialize the list if it is uninitialized.
+            if (this.HiddenCalendars == null)
+            {
+                this.HiddenCalendars = await this.InitializeHiddenCalendarsAsync();
+            }
+
+            bool isHidden = false;
+            if (this.HiddenCalendars.ContainsKey(accountId) && this.HiddenCalendars[accountId] != null)
+            {
+                isHidden = this.HiddenCalendars[accountId].Where(c => c.CalendarID == calendarId).FirstOrDefault() != null;
+            }
+
+            return isHidden;
+        }
+
         /// <summary>
         /// Adds the given calendar to a list of hidden calendars.
         /// </summary>
@@ -150,6 +167,7 @@ namespace MinimalismCalendar.Models.AppConfigModels
             // Create a new calendar record and add it to the list.
             this.HiddenCalendars[calendar.AccountID].Add(new HiddenCalendarRecord()
             {
+                CalendarID = calendar.ID,
                 CalendarName = calendar.Name
             });
         }

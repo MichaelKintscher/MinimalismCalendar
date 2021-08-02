@@ -381,8 +381,28 @@ namespace MinimalismCalendar.Controllers
             List<CalendarEvent> eventList = new List<CalendarEvent>();
             foreach (CalendarProviderAccount account in accounts)
             {
-                List<CalendarEvent> eventsForAccount = await GoogleCalendarAPI.Instance.GetCalendarEventsAsync(account.ID);
-                eventList.AddRange(eventsForAccount);
+                // For each calendar on the account...
+                List<Calendar> calendars = await GoogleCalendarAPI.Instance.GetCalendarsAsync(account.ID);
+                foreach (Calendar calendar in calendars)
+                {
+                    // Skip any hidden calendars.
+                    if (await AppConfig.Instance.IsCalendarHiddenAsync(account.ID, calendar.ID))
+                    {
+                        continue;
+                    }
+
+                    // Get all events on the calendar and add them to the list.
+                    try
+                    {
+                        List<CalendarEvent> eventsForAccount = await GoogleCalendarAPI.Instance.GetCalendarEventsAsync(account.ID, calendar.ID);
+                        eventList.AddRange(eventsForAccount);
+                    }
+                    catch(Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Problem reading calendar with ID: " + calendar.ID + ". Calendar skipped.");
+                        continue;
+                    }
+                }
             }
 
             // Initialize the calendar control on the homepage.
