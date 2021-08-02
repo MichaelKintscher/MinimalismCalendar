@@ -136,6 +136,12 @@ namespace MinimalismCalendar.Models.AppConfigModels
             return allRecords;
         }
 
+        /// <summary>
+        /// Returns whether a calendar is hidden or not.
+        /// </summary>
+        /// <param name="accountId">The ID of the account the calendar belongs to.</param>
+        /// <param name="calendarId">The ID of the calendar to check.</param>
+        /// <returns>True if the calendar is hidden, false otherwise.</returns>
         public async Task<bool> IsCalendarHiddenAsync(string accountId, string calendarId)
         {
             // Initialize the list if it is uninitialized.
