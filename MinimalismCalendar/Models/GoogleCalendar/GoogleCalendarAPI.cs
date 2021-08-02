@@ -129,6 +129,7 @@ namespace MinimalismCalendar.Models.GoogleCalendar
 
         /// <summary>
         /// Gets a list of events on the authorized user's primary calendar.
+        /// NOTE: Multi-day or all-day events are currently excluded.
         /// See: https://developers.google.com/calendar/api/v3/reference/events/list
         /// </summary>
         /// <param name="accountId">The ID for the account assigned by the app.</param>
@@ -137,11 +138,24 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         {
             string uri = "https://www.googleapis.com/calendar/v3/calendars/primary/events";
 
-            // No exceptions were thrown, so parse the response message.
+            // Parse the response message.
             string responseContent = await this.GetAsync(accountId, uri);
+            string nextPageToken;
+            List<CalendarEvent> events = this.GetEventsFromResponse(responseContent, out nextPageToken);
+
+            // While there is another page of content to view (events are paginated)...
+            while (String.IsNullOrWhiteSpace(nextPageToken) == false)
+            {
+                // Construct the query for the next page.
+                string pageUri = uri + "?pageToken=" + nextPageToken;
+
+                // Get the next page of results, and add the parsed events to the list.
+                responseContent = await this.GetAsync(accountId, pageUri);
+                events.AddRange(this.GetEventsFromResponse(responseContent, out nextPageToken));
+            }
 
             // Convert the response content to a list of events.
-            return this.GetEventsFromResponse(responseContent);
+            return events;
         }
 
         /// <summary>
@@ -350,42 +364,56 @@ namespace MinimalismCalendar.Models.GoogleCalendar
         /// </summary>
         /// <param name="responseContent">The response content formatted in an Events:list response from the Google Calendar API.</param>
         /// <returns>A list of calendar events on the user's primary calendar.</returns>
-        private List<CalendarEvent> GetEventsFromResponse(string responseContent)
+        private List<CalendarEvent> GetEventsFromResponse(string responseContent, out string nextPageToken)
         {
             // Parse the list of events from the response content.
             JsonObject responseJson = JsonObject.Parse(responseContent);
             JsonArray itemsArray = responseJson["items"].GetArray();
 
+            // Get the next page token, if one exists.
+            nextPageToken = responseJson.ContainsKey("nextPageToken") ? responseJson["nextPageToken"].GetString() : String.Empty;
+
             // Create an empty list of events, and parse and add each event.
             List<CalendarEvent> events = new List<CalendarEvent>();
             foreach (var eventJsonValue in itemsArray)
             {
+                
                 // This is necessary because of the type iterated over in the JsonArray.
                 JsonObject eventJson = eventJsonValue.GetObject();
 
                 // Pares the event's ID.
                 string id = eventJson["id"].GetString();
 
-                // Parse the event's title (summary).
-                string summary = eventJson["summary"].GetString();
-
-                // Parse the event's start date and time.
-                JsonObject startJson = eventJson["start"].GetObject();
-                DateTime start = DateTime.Parse(startJson["dateTime"].GetString());
-
-                // Parse the event's end date and time.
-                JsonObject endJson = eventJson["end"].GetObject();
-                DateTime end = DateTime.Parse(endJson["dateTime"].GetString());
-
-                // Add a new calendar event model to the list.
-                events.Add(new CalendarEvent()
+                try
                 {
-                    ID = id,
-                    Name = summary,
-                    Start = start,
-                    End = end
-                });
+                    // Parse the event's title (summary).
+                    string summary = eventJson["summary"].GetString();
+
+                    // Parse the event's start date and time.
+                    JsonObject startJson = eventJson["start"].GetObject();
+                    DateTime start = DateTime.Parse(startJson["dateTime"].GetString());
+
+                    // Parse the event's end date and time.
+                    JsonObject endJson = eventJson["end"].GetObject();
+                    DateTime end = DateTime.Parse(endJson["dateTime"].GetString());
+
+                    // Add a new calendar event model to the list.
+                    events.Add(new CalendarEvent()
+                    {
+                        ID = id,
+                        Name = summary,
+                        Start = start,
+                        End = end
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Error parsing event! ID: " + id + ", message: " + ex.Message);
+                    continue;
+                }
             }
+
+            System.Diagnostics.Debug.WriteLine(events.Count + " events successfully parsed.");
 
             return events;
         }
