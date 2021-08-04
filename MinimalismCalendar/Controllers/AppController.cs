@@ -1,6 +1,7 @@
 ﻿using MinimalismCalendar.Controllers.Navigation;
 using MinimalismCalendar.Enums;
 using MinimalismCalendar.EventArguments;
+using MinimalismCalendar.Managers;
 using MinimalismCalendar.Models;
 using MinimalismCalendar.Models.AppConfigModels;
 using MinimalismCalendar.Models.GoogleCalendar;
@@ -167,6 +168,7 @@ namespace MinimalismCalendar.Controllers
             {
                 settingsPageFrom.ChangeAccountConnectionRequested -= this.SettingsPage_ChangeAccountConnectionRequested;
                 settingsPageFrom.OauthCodeAcquired -= this.SettingsPage_OauthCodeAcquired;
+                settingsPageFrom.ShowAtLaunchSettingChanged -= this.SettingsPage_ShowAtLaunchSettingChanged;
                 settingsPageFrom.CalendarVisibilityChanged -= this.SettingsPage_CalendarVisibilityChanged;
                 settingsPageFrom.ConnectionRequestCancelled -= this.SettingsPage_ConnectionRequestCancelled;
                 fromPageName = "Settings Page";
@@ -245,6 +247,17 @@ namespace MinimalismCalendar.Controllers
         {
             // Clear the associated state value.
             this.accountIdPendingAuthorization = Guid.Empty;
+        }
+
+        /// <summary>
+        /// Handles when the user changes the show at launch app setting from the settings page.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SettingsPage_ShowAtLaunchSettingChanged(object sender, ShowAtLaunchSettingChangedEventArgs e)
+        {
+            // Set the related app setting.
+            AppSettingsManager.ResumeLastViewedOnLaunch = e.ResumeLastViewed;
         }
 
         /// <summary>
@@ -353,6 +366,7 @@ namespace MinimalismCalendar.Controllers
             settingsPage.ChangeAccountConnectionRequested += this.SettingsPage_ChangeAccountConnectionRequested;
             settingsPage.OauthCodeAcquired += this.SettingsPage_OauthCodeAcquired;
             settingsPage.ConnectionRequestCancelled += this.SettingsPage_ConnectionRequestCancelled;
+            settingsPage.ShowAtLaunchSettingChanged += this.SettingsPage_ShowAtLaunchSettingChanged;
             settingsPage.CalendarVisibilityChanged += this.SettingsPage_CalendarVisibilityChanged;
 
             // Add the accounts logged into with this app to the page.
@@ -362,6 +376,9 @@ namespace MinimalismCalendar.Controllers
                 // Get the account and add it to the list on the page.
                 settingsPage.Accounts.Add(account);
             }
+
+            // Initialize the ResumeLastViewedOnLaunch setting.
+            settingsPage.ResumeLastViewedOnLaunch = AppSettingsManager.ResumeLastViewedOnLaunch;
 
             // Refresh the calendars list.
             await this.RefreshSettinsPageCalendarList(settingsPage);

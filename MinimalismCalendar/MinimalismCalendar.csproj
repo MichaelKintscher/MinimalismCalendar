@@ -125,6 +125,7 @@
     <Compile Include="Controllers\Navigation\SettingsState.cs" />
     <Compile Include="Controllers\Navigation\StartState.cs" />
     <Compile Include="Controllers\SingletonController.cs" />
+    <Compile Include="Converters\BoolToInverseBoolConverter.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Enums\PageTypes.cs" />
     <Compile Include="EventArguments\ApiAuthorizedEventArgs.cs" />
@@ -134,10 +135,12 @@
     <Compile Include="EventArguments\NavigatedEventArgs.cs" />
     <Compile Include="EventArguments\NavigationRequestedEventArgs.cs" />
     <Compile Include="EventArguments\OAuthFlowContinueEventArgs.cs" />
+    <Compile Include="EventArguments\ShowAtLaunchSettingChangedEventArgs.cs" />
     <Compile Include="Exceptions\ApiNotAuthorizedException.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Managers\AppSettingsManager.cs" />
     <Compile Include="Managers\CalendarManager.cs" />
     <Compile Include="Managers\CalendarProviderAccountManager.cs" />
     <Compile Include="Managers\HiddenCalendarRecordManager.cs" />

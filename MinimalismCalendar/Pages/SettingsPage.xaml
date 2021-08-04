@@ -14,6 +14,7 @@
     <Page.Resources>
         <Converters:BoolToVisibilityConverter x:Key="TrueToVisibleConverter" TrueVisibility="Visible" FalseVisibility="Collapsed"></Converters:BoolToVisibilityConverter>
         <Converters:BoolToVisibilityConverter x:Key="FalseToVisibleConverter" TrueVisibility="Collapsed" FalseVisibility="Visible"></Converters:BoolToVisibilityConverter>
+        <Converters:BoolToInverseBoolConverter x:Key="BoolToInverseBoolConverter"></Converters:BoolToInverseBoolConverter>
         
         <!-- Styles -->
         <Style x:Key="DraggableReorderableListView" TargetType="ListView">
@@ -46,149 +47,180 @@
             </StackPanel>
         </ContentDialog>
 
-        <StackPanel>
-            <StackPanel Orientation="Horizontal"
-                        Visibility="{x:Bind InternetConnectionAvailable, Mode=OneWay, Converter={StaticResource FalseToVisibleConverter}}"
-                        Margin="10">
-                <FontIcon FontFamily="Segoe MDL2 Assets"
-                          Glyph="&#xE783;"
-                          FontSize="14"
-                          Margin="0,0,5,0"></FontIcon>
-                <TextBlock Text="Please reconnect to the internet to adjust settings for connected services."></TextBlock>
-            </StackPanel>
-            <StackPanel>
-                <TextBlock Style="{StaticResource HeaderTextBlockStyle}"
-                           Text="Accounts"></TextBlock>
-                
-                <!-- Accounts List -->
-                <ListView x:Name="AccountsListView"
-                          ItemsSource="{x:Bind Accounts, Mode=OneWay}"
-                          SelectionMode="None">
-                    <ListView.ItemContainerStyle>
-                        <Style TargetType="ListViewItem">
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
-                        </Style>
-                    </ListView.ItemContainerStyle>
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="appconfigmodels:CalendarProviderAccount">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
-                                </Grid.ColumnDefinitions>
+        <ScrollViewer>
 
-                                <TextBox Grid.Column="0"
-                                         VerticalAlignment="Center"
-                                         Margin="10"
-                                         Text="{x:Bind FriendlyName, Mode=TwoWay}"></TextBox>
-                                <PersonPicture Grid.Column="1"
+            <StackPanel>
+                <StackPanel Orientation="Horizontal"
+                            Visibility="{x:Bind InternetConnectionAvailable, Mode=OneWay, Converter={StaticResource FalseToVisibleConverter}}"
+                            Margin="10">
+                    <FontIcon FontFamily="Segoe MDL2 Assets"
+                              Glyph="&#xE783;"
+                              FontSize="14"
+                              Margin="0,0,5,0"></FontIcon>
+                    <TextBlock Text="Please reconnect to the internet to adjust settings for connected services."></TextBlock>
+                </StackPanel>
+            
+                <!-- Accounts block -->
+                <StackPanel Margin="12">
+                    <TextBlock Style="{StaticResource TitleTextBlockStyle}"
+                               Text="Accounts"></TextBlock>
+                
+                    <!-- Accounts List -->
+                    <ListView x:Name="AccountsListView"
+                              ItemsSource="{x:Bind Accounts, Mode=OneWay}"
+                              SelectionMode="None">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="appconfigmodels:CalendarProviderAccount">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"></ColumnDefinition>
+                                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                        <ColumnDefinition Width="*"></ColumnDefinition>
+                                        <ColumnDefinition Width="*"></ColumnDefinition>
+                                        <ColumnDefinition Width="*"></ColumnDefinition>
+                                        <ColumnDefinition Width="*"></ColumnDefinition>
+                                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBox Grid.Column="0"
+                                             VerticalAlignment="Center"
+                                             Margin="0,10,10,10"
+                                             Text="{x:Bind FriendlyName, Mode=TwoWay}"></TextBox>
+                                    <PersonPicture Grid.Column="1"
+                                                   VerticalAlignment="Center"
+                                                   Margin="10"
+                                                   MaxWidth="50"
+                                                   ProfilePicture="{x:Bind PictureUri}"
+                                                   DisplayName="{x:Bind Username}"></PersonPicture>
+                                    <TextBlock Grid.Column="2"
                                                VerticalAlignment="Center"
                                                Margin="10"
-                                               MaxWidth="50"
-                                               ProfilePicture="{x:Bind PictureUri}"
-                                               DisplayName="{x:Bind Username}"></PersonPicture>
-                                <TextBlock Grid.Column="2"
-                                           VerticalAlignment="Center"
-                                           Margin="10"
-                                           Text="{x:Bind Username}"></TextBlock>
-                                <TextBlock Grid.Column="3"
-                                           VerticalAlignment="Center"
-                                           Margin="10"
-                                           Text="{x:Bind Provider}"></TextBlock>
-                                <StackPanel Grid.Column="4"
+                                               Text="{x:Bind Username}"></TextBlock>
+                                    <TextBlock Grid.Column="3"
+                                               VerticalAlignment="Center"
+                                               Margin="10"
+                                               Text="{x:Bind Provider}"></TextBlock>
+                                    <StackPanel Grid.Column="4"
+                                                VerticalAlignment="Center"
+                                                Margin="10"
+                                                Orientation="Horizontal"
+                                                Visibility="{x:Bind Connected, Converter={StaticResource TrueToVisibleConverter}}">
+                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                                  Glyph="&#xF386;"></FontIcon>
+                                        <TextBlock Text="Connected"></TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4"
+                                                VerticalAlignment="Center"
+                                                Margin="10"
+                                                Orientation="Horizontal"
+                                                Visibility="{x:Bind Connected, Converter={StaticResource FalseToVisibleConverter}}">
+                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                                  Glyph="&#xE871;"></FontIcon>
+                                        <TextBlock Text="Connection Error"></TextBlock>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="5"
+                                               VerticalAlignment="Center"
+                                               Margin="10"
+                                               Text="{x:Bind LastSynced}"></TextBlock>
+                                    <Button Grid.Column="6"
                                             VerticalAlignment="Center"
-                                            Margin="10"
-                                            Orientation="Horizontal"
-                                            Visibility="{x:Bind Connected, Converter={StaticResource TrueToVisibleConverter}}">
-                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
-                                              Glyph="&#xF386;"></FontIcon>
-                                    <TextBlock Text="Connected"></TextBlock>
-                                </StackPanel>
-                                <StackPanel Grid.Column="4"
-                                            VerticalAlignment="Center"
-                                            Margin="10"
-                                            Orientation="Horizontal"
-                                            Visibility="{x:Bind Connected, Converter={StaticResource FalseToVisibleConverter}}">
-                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
-                                              Glyph="&#xE871;"></FontIcon>
-                                    <TextBlock Text="Connection Error"></TextBlock>
-                                </StackPanel>
-                                <TextBlock Grid.Column="5"
-                                           VerticalAlignment="Center"
-                                           Margin="10"
-                                           Text="{x:Bind LastSynced}"></TextBlock>
-                                <Button Grid.Column="6"
-                                        VerticalAlignment="Center"
-                                        Padding="10"
-                                        HorizontalAlignment="Center"
-                                        Tag="{x:Bind ID}"
-                                        Click="RemoveAccountButton_Click">
-                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
-                                              Glyph="&#xE107;"></FontIcon>
-                                </Button>
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
-                <!-- Button is disabled when no internet connection is available. -->
-                <Button x:Name="AuthenticateGoogleButton"
-                        IsEnabled="{x:Bind InternetConnectionAvailable, Mode=OneWay}"
-                        Click="AuthenticateGoogleButton_Click">Authenticate</Button>
-            </StackPanel>
-            <StackPanel>
-                <TextBlock Style="{StaticResource HeaderTextBlockStyle}">Calendars</TextBlock>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"></ColumnDefinition>
-                        <ColumnDefinition Width="*"></ColumnDefinition>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"></RowDefinition>
-                        <RowDefinition Height="Auto"></RowDefinition>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0"
-                               Grid.Column="0">Hidden Calendars</TextBlock>
-
-                    <TextBlock Grid.Row="0"
-                               Grid.Column="1">Visible Calendars</TextBlock>
-
-                    <ListView x:Name="HiddenCalendarsListView"
-                              Grid.Row="1"
-                              Grid.Column="0"
-                              ItemsSource="{x:Bind HiddenCalendars, Mode=TwoWay}"
-                              Style="{StaticResource DraggableReorderableListView}"
-                              DragItemsStarting="ListView_DragItemsStarting"
-                              DragOver="ListView_DragOver"
-                              Drop="ListView_Drop">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="models:Calendar">
-                                <TextBlock Text="{x:Bind Name}"></TextBlock>
+                                            Padding="10"
+                                            HorizontalAlignment="Center"
+                                            Tag="{x:Bind ID}"
+                                            Click="RemoveAccountButton_Click">
+                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                                  Glyph="&#xE107;"></FontIcon>
+                                    </Button>
+                                </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
+                    <!-- Button is disabled when no internet connection is available. -->
+                    <Button x:Name="AuthenticateGoogleButton"
+                            Margin="0,20,20,20"
+                            IsEnabled="{x:Bind InternetConnectionAvailable, Mode=OneWay}"
+                            Click="AuthenticateGoogleButton_Click">Add Google Account</Button>
+                </StackPanel>
+            
+                <!-- Calendars block -->
+                <StackPanel Padding="12">
+                    <TextBlock Margin="0,0,0,10"
+                               Style="{StaticResource TitleTextBlockStyle}">Calendars</TextBlock>
+                
+                    <!-- Show on launch -->
+                    <TextBlock Style="{StaticResource BodyTextBlockStyle}">When the app launches, show me:</TextBlock>
+                    <StackPanel Margin="0,8,0,20" Orientation="Horizontal">
+                        <RadioButton x:Name="ShowThisWeekOnAppLaunchRadioButton"
+                                     GroupName="ShowOnAppLaunchRadioButtonGroup"
+                                     Tag="ThisWeek"
+                                     IsChecked="{x:Bind ResumeLastViewedOnLaunch, Converter={StaticResource BoolToInverseBoolConverter}}"
+                                     Checked="ShowOnAppLaunchRadioButton_Checked">This week</RadioButton>
+                        <RadioButton x:Name="ShowLastViewedOnAppLaunchRadioButton"
+                                     GroupName="ShowOnAppLaunchRadioButtonGroup"
+                                     Tag="LastViewed"
+                                     IsChecked="{x:Bind ResumeLastViewedOnLaunch}"
+                                     Checked="ShowOnAppLaunchRadioButton_Checked">Where I left off</RadioButton>
+                    </StackPanel>
+                
+                    <!-- Hidden calendars -->
+                    <TextBlock Style="{StaticResource BodyTextBlockStyle}">Hidden calendars will not be displayed anywhere else in the app.</TextBlock>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"></ColumnDefinition>
+                            <ColumnDefinition Width="*"></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"></RowDefinition>
+                            <RowDefinition Height="Auto"></RowDefinition>
+                        </Grid.RowDefinitions>
 
-                    <ListView x:Name="VisibleCalendarsListView"
-                              Grid.Row="1"
-                              Grid.Column="1"
-                              ItemsSource="{x:Bind VisibleCalendars, Mode=TwoWay}"
-                              Style="{StaticResource DraggableReorderableListView}"
-                              DragItemsStarting="ListView_DragItemsStarting"
-                              DragOver="ListView_DragOver"
-                              Drop="ListView_Drop">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="models:Calendar">
-                                <TextBlock Text="{x:Bind Name}"></TextBlock>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="0"
+                                   Margin="0,8,8,0"
+                                   Style="{StaticResource SubtitleTextBlockStyle}">Visible Calendars</TextBlock>
+
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0,8,8,0"
+                                   Style="{StaticResource SubtitleTextBlockStyle}">Hidden Calendars</TextBlock>
+
+                        <ListView x:Name="VisibleCalendarsListView"
+                                  Grid.Row="1"
+                                  Grid.Column="0"
+                                  ItemsSource="{x:Bind VisibleCalendars, Mode=TwoWay}"
+                                  Style="{StaticResource DraggableReorderableListView}"
+                                  DragItemsStarting="ListView_DragItemsStarting"
+                                  DragOver="ListView_DragOver"
+                                  Drop="ListView_Drop">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="models:Calendar">
+                                    <TextBlock Text="{x:Bind Name}"></TextBlock>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <ListView x:Name="HiddenCalendarsListView"
+                                  Grid.Row="1"
+                                  Grid.Column="1"
+                                  ItemsSource="{x:Bind HiddenCalendars, Mode=TwoWay}"
+                                  Style="{StaticResource DraggableReorderableListView}"
+                                  DragItemsStarting="ListView_DragItemsStarting"
+                                  DragOver="ListView_DragOver"
+                                  Drop="ListView_Drop">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="models:Calendar">
+                                    <TextBlock Text="{x:Bind Name}"></TextBlock>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </StackPanel>
             </StackPanel>
-        </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>

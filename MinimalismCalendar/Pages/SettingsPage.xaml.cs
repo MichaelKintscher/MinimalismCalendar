@@ -47,6 +47,20 @@ namespace MinimalismCalendar.Pages
             }
         }
 
+        private bool resumeLastViewedOnLaunch;
+        /// <summary>
+        /// Whether the app should resume the last view position on the calendar upon app launch.
+        /// </summary>
+        public bool ResumeLastViewedOnLaunch
+        {
+            get => this.resumeLastViewedOnLaunch;
+            set
+            {
+                this.resumeLastViewedOnLaunch = value;
+                this.RaisePropertyChanged("ResumeLastViewedOnLaunch");
+            }
+        }
+
         public ObservableCollection<CalendarProviderAccount> Accounts { get; set; }
 
         /// <summary>
@@ -110,6 +124,18 @@ namespace MinimalismCalendar.Pages
             this.ConnectionRequestCancelled?.Invoke(this, args);
         }
 
+        public delegate void ShowAtLaunchSettingChangedHandler(object sender, ShowAtLaunchSettingChangedEventArgs e);
+        /// <summary>
+        /// Raised when the user changed the On App Show setting..
+        /// </summary>
+        public event ShowAtLaunchSettingChangedHandler ShowAtLaunchSettingChanged;
+        private void RaiseShowAtLaunchSettingChanged(bool resumeLastViewed)
+        {
+            // Create the args and call the listening event handlers, if there are any.
+            ShowAtLaunchSettingChangedEventArgs args = new ShowAtLaunchSettingChangedEventArgs(resumeLastViewed);
+            this.ShowAtLaunchSettingChanged?.Invoke(this, args);
+        }
+
         public delegate void CalendarVisibilityChangedHandler(object sender, CalendarVisibilityChangedEventArgs e);
         /// <summary>
         /// Raised when a calendar's visibility changed.
@@ -156,6 +182,22 @@ namespace MinimalismCalendar.Pages
                 // Get the acount ID and then raise the RaiseChangeAccountConnectionRequested event.
                 string accountId = button.Tag.ToString();
                 this.RaiseChangeAccountConnectionRequested(accountId, CalendarProvider.Google, ConnectionAction.Disconnect);
+            }
+        }
+
+        /// <summary>
+        /// Handles when the user checks one of the Show on app launch radio buttons.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ShowOnAppLaunchRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            if (sender is RadioButton radioButton)
+            {
+                // Raise the show at launch setting changed event using the prameter to
+                //      tell which option was selected.
+                bool resumeLastViewed = radioButton.Tag.ToString() == "LastViewed";
+                this.RaiseShowAtLaunchSettingChanged(resumeLastViewed);
             }
         }
 
