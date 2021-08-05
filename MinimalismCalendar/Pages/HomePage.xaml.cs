@@ -1,4 +1,5 @@
-﻿using MinimalismCalendar.Models;
+﻿using MinimalismCalendar.EventArguments;
+using MinimalismCalendar.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,12 +24,26 @@ namespace MinimalismCalendar.Pages
     /// </summary>
     public sealed partial class HomePage : Page
     {
+        #region Events
+        public delegate void CalendarViewChangedHandler(object sender, CalendarViewChangedEventArgs e);
+        /// <summary>
+        /// Raised when the calendar view changes.
+        /// </summary>
+        public event CalendarViewChangedHandler CalendarViewChanged;
+        private void RaiseCalendarViewChanged(DateTime newSunday)
+        {
+            // Create the args and call the listening event handlers, if there are any.
+            CalendarViewChangedEventArgs args = new CalendarViewChangedEventArgs(newSunday);
+            this.CalendarViewChanged?.Invoke(this, args);
+        }
+        #endregion
+
         public HomePage()
         {
             this.InitializeComponent();
         }
 
-        #region Events
+        #region Event Handlers
         /// <summary>
         /// Handles when the user taps on the splitview pane toggle button.
         /// </summary>
@@ -38,6 +53,17 @@ namespace MinimalismCalendar.Pages
         {
             // Toggle the main split view's pane.
             this.MainSplitView.IsPaneOpen = !this.MainSplitView.IsPaneOpen;
+        }
+
+        /// <summary>
+        /// Handles when the calendar view changes.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CalendarControl_ViewChanged(object sender, CalendarViewChangedEventArgs e)
+        {
+            // Raise the calendar view changed event.
+            this.RaiseCalendarViewChanged(e.NewSunday);
         }
         #endregion
 

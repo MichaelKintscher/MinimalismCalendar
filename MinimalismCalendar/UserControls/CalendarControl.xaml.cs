@@ -1,4 +1,5 @@
-﻿using MinimalismCalendar.Models;
+﻿using MinimalismCalendar.EventArguments;
+using MinimalismCalendar.Models;
 using MinimalismCalendar.Utility;
 using System;
 using System.Collections.Generic;
@@ -87,6 +88,18 @@ namespace MinimalismCalendar.UserControls
             {
                 this.PropertyChanged(this, new PropertyChangedEventArgs(name));
             }
+        }
+
+        public delegate void ViewChangedHandler(object sender, CalendarViewChangedEventArgs e);
+        /// <summary>
+        /// Raised when the calendar view changes.
+        /// </summary>
+        public event ViewChangedHandler ViewChanged;
+        private void RaiseViewChanged(DateTime newSunday)
+        {
+            // Create the args and call the listening event handlers, if there are any.
+            CalendarViewChangedEventArgs args = new CalendarViewChangedEventArgs(newSunday);
+            this.ViewChanged?.Invoke(this, args);
         }
         #endregion
 
@@ -299,6 +312,9 @@ namespace MinimalismCalendar.UserControls
 
             // Refresh the agenda controls.
             this.RefreshDayAgendaControls(this.DayAgendaControls);
+
+            // Raise the calendar view changed event with the new visible sunday.
+            this.RaiseViewChanged(this.sunday);
         }
         #endregion
 

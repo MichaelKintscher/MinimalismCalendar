@@ -163,6 +163,7 @@ namespace MinimalismCalendar.Controllers
             else if (e.PageNavigatedFrom is HomePage homePageFrom)
             {
                 fromPageName = "Home Page";
+                homePageFrom.CalendarViewChanged -= this.HomePage_CalendarViewChanged;
             }
             else if (e.PageNavigatedFrom is SettingsPage settingsPageFrom)
             {
@@ -179,7 +180,22 @@ namespace MinimalismCalendar.Controllers
 
             System.Diagnostics.Debug.WriteLine("Navigated to " + toPageName + " from " + fromPageName);
         }
+        #endregion
 
+        #region Event Handlers - Home Page
+        /// <summary>
+        /// Handles when the calendar view changes on the home page.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void HomePage_CalendarViewChanged(object sender, CalendarViewChangedEventArgs e)
+        {
+            // Update the stored last viewed date.
+            AppConfig.Instance.SetLastViewedDate(e.NewSunday);
+        }
+        #endregion
+
+        #region Event Handlers - Settings Page
         /// <summary>
         /// Handles when the user requests to change a connection to a service.
         /// </summary>
@@ -348,7 +364,7 @@ namespace MinimalismCalendar.Controllers
         private async Task InitializeHomePageAsync(HomePage homePage)
         {
             // Subscribe to the new page's events.
-            //    - None at the moment.
+            homePage.CalendarViewChanged += this.HomePage_CalendarViewChanged;
 
             // Initialize the calendar control.
             //List<CalendarEvent> eventList = TestDataGenerator.GetTestEvents();
@@ -422,8 +438,19 @@ namespace MinimalismCalendar.Controllers
                 }
             }
 
+            // Get the date to set the calendar view to.
+            DateTime visibleDate = DateTime.Now;
+
+            // If the resume setting is enabled then use the last viewed date.
+            if (AppSettingsManager.ResumeLastViewedOnLaunch)
+            {
+                // Still default to today if a saved value is not found.
+                DateTime? lastViewedDate = await AppConfig.Instance.GetLastViewedDateAsync();
+                visibleDate = lastViewedDate.HasValue ? lastViewedDate.Value : DateTime.Now;
+            }
+
             // Initialize the calendar control on the homepage.
-            homePage.InitializeCalendarControl(DateTime.Now, eventList);
+            homePage.InitializeCalendarControl(visibleDate, eventList);
             System.Diagnostics.Debug.WriteLine("Home page calendar initialized!");
         }
 

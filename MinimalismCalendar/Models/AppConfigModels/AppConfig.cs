@@ -28,6 +28,10 @@ namespace MinimalismCalendar.Models.AppConfigModels
         /// The list of calendars the user has set to be hidden.
         /// </summary>
         private Dictionary<string, List<HiddenCalendarRecord>> HiddenCalendars { get; set; }
+        /// <summary>
+        /// The date on the home page calendar that was last viewed.
+        /// </summary>
+        private DateTime? LastViewedDate { get; set; }
         #endregion
 
         #region Constructors
@@ -35,6 +39,76 @@ namespace MinimalismCalendar.Models.AppConfigModels
         {
             this.Accounts = null;
             this.HiddenCalendars = null;
+            this.LastViewedDate = null;
+        }
+        #endregion
+
+        #region Methods
+        /// <summary>
+        /// Gets the date that was last viewed on the home page calendar, or null in
+        /// the event of an error retreiving the value.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<DateTime?> GetLastViewedDateAsync()
+        {
+            // Initialize the value if it is uninitialized.
+            if (this.LastViewedDate == null)
+            {
+                this.LastViewedDate = await this.InitializedLastViewedDate();
+            }
+
+            return this.LastViewedDate;
+        }
+
+        /// <summary>
+        /// Sets the date that was last viewed on the home page calendar.
+        /// </summary>
+        /// <param name="lastViewedDate">The date that was last viewed on the home page calendar.</param>
+        public void SetLastViewedDate(DateTime lastViewedDate)
+        {
+            this.LastViewedDate = lastViewedDate;
+        }
+
+        /// <summary>
+        /// Saves all config contents to a config file.
+        /// </summary>
+        /// <returns></returns>
+        public async Task SaveAsync()
+        {
+            // There are no accounts to save.
+            if (this.Accounts == null)
+            {
+                return;
+            }
+
+            // For each account in the list of accounts...
+            JsonArray accountsArray = new JsonArray();
+            foreach (CalendarProviderAccount account in this.Accounts)
+            {
+                // Serialize the account data.
+                JsonObject accountJson = CalendarProviderAccountManager.Serialize(account);
+
+                // Add the array of calendar data to the serialized account data.
+                JsonArray calsArray = this.SerializeHiddenCalendarsForAccount(account.ID);
+                accountJson.Add("hidden_calendars", calsArray);
+
+                // Add the account to array.
+                accountsArray.Add(accountJson);
+            }
+
+            // Store the array in a json object.
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.Add("accounts", accountsArray);
+
+            // Add the last viewed datetime to the json object.
+            string lastViewedDateString = this.LastViewedDate.HasValue ? this.LastViewedDate.Value.ToString() : "";
+            jsonObject.Add("last_viewed_date", JsonValue.CreateStringValue(lastViewedDateString));
+
+            // Get a reference to the file, and create it if it does not exist.
+            StorageFile file = await ApplicationData.Current.LocalFolder.CreateFileAsync(AppConfig.ConfigFileName, CreationCollisionOption.ReplaceExisting);
+
+            // Save the json object to the file.
+            await FileIO.WriteTextAsync(file, jsonObject.Stringify());
         }
         #endregion
 
@@ -214,44 +288,6 @@ namespace MinimalismCalendar.Models.AppConfigModels
 
             this.HiddenCalendars.Remove(accountId);
         }
-
-        /// <summary>
-        /// Saves all config contents to a config file.
-        /// </summary>
-        /// <returns></returns>
-        public async Task SaveAsync()
-        {
-            // There are no accounts to save.
-            if (this.Accounts == null)
-            {
-                return;
-            }
-
-            // For each account in the list of accounts...
-            JsonArray accountsArray = new JsonArray();
-            foreach (CalendarProviderAccount account in this.Accounts)
-            {
-                // Serialize the account data.
-                JsonObject accountJson = CalendarProviderAccountManager.Serialize(account);
-
-                // Add the array of calendar data to the serialized account data.
-                JsonArray calsArray = this.SerializeHiddenCalendarsForAccount(account.ID);
-                accountJson.Add("hidden_calendars", calsArray);
-
-                // Add the account to array.
-                accountsArray.Add(accountJson);
-            }
-
-            // Store the array in a json object.
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.Add("accounts", accountsArray);
-
-            // Get a reference to the file, and create it if it does not exist.
-            StorageFile file = await ApplicationData.Current.LocalFolder.CreateFileAsync(AppConfig.ConfigFileName, CreationCollisionOption.ReplaceExisting);
-
-            // Save the json object to the file.
-            await FileIO.WriteTextAsync(file, jsonObject.Stringify());
-        }
         #endregion
 
         #region Helper Methods
@@ -346,6 +382,40 @@ namespace MinimalismCalendar.Models.AppConfigModels
             }
 
             return recordsCollection;
+        }
+
+        /// <summary>
+        /// Initializes the date last viewed on the home page calendar from the stored data.
+        /// </summary>
+        /// <returns></returns>
+        private async Task<DateTime?> InitializedLastViewedDate()
+        {
+            // Initialize the collection.
+            DateTime? lastViewedDate = null;
+
+            // Try to read the list from the file.
+            IStorageItem storageItem = await ApplicationData.Current.LocalFolder.TryGetItemAsync(AppConfig.ConfigFileName);
+            if (storageItem is StorageFile file)
+            {
+                // Read the data from the file.
+                string fileContent = await FileIO.ReadTextAsync(file);
+
+                // Parse the data from the file.
+                JsonObject jsonObject = JsonObject.Parse(fileContent);
+
+                // Try to parse the dateTime.
+                try
+                {
+                    string dateTimeString = jsonObject["last_viewed_date"].GetString();
+                    lastViewedDate = DateTime.Parse(dateTimeString);
+                }
+                catch (Exception ex)
+                {
+                    // Nothing to do. The value will be returned as null from this method.
+                }
+            }
+
+            return lastViewedDate;
         }
 
         /// <summary>

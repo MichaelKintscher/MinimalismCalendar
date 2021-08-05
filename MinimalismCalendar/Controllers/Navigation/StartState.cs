@@ -37,7 +37,6 @@ namespace MinimalismCalendar.Controllers.Navigation
             // Instruct the view to navigate.
             this.Controller.RootPage.Navigate(PageTypes.Home);
 
-
             // Change the state to the Home state.
             this.Controller.NavState = new HomeState(this);
         }

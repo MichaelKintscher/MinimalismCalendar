@@ -56,7 +56,8 @@
             
             <!-- Main Calendar View -->
             <usercontrols:CalendarControl x:Name="CalendarControl"
-                                          Margin="5,0,0,0"></usercontrols:CalendarControl>
+                                          Margin="5,0,0,0"
+                                          ViewChanged="CalendarControl_ViewChanged"></usercontrols:CalendarControl>
         </SplitView>
     </Grid>
 </Page>
