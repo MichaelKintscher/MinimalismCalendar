@@ -167,6 +167,9 @@
     <Compile Include="UserControls\CalendarControl.xaml.cs">
       <DependentUpon>CalendarControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UserControls\CalendarStatusViewControl.xaml.cs">
+      <DependentUpon>CalendarStatusViewControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserControls\DayAgendaControl.xaml.cs">
       <DependentUpon>DayAgendaControl.xaml</DependentUpon>
     </Compile>
@@ -206,6 +209,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UserControls\CalendarControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserControls\CalendarStatusViewControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
